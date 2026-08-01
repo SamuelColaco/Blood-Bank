@@ -1,0 +1,31 @@
+{
+  "name": "blood-bank-system",
+  "version": "0.1.0",
+  "description": "Multi-tenant blood bank management system - core inventory domain (Phase 1)",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:architecture": "depcruise --config .dependency-cruiser.js src",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.4.0",
+    "@nestjs/core": "^10.4.0",
+    "@nestjs/platform-fastify": "^10.4.0",
+    "@prisma/client": "^5.20.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.4.5",
+    "@types/node": "^20.14.0",
+    "dependency-cruiser": "^16.4.2",
+    "prisma": "^5.20.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.1"
+  }
+}

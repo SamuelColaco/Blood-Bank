@@ -1,0 +1,131 @@
+// Phase 1 schema - Inventory bounded context.
+// Naming follows the corrected design from DECISOES-HOTSPOTS.md:
+// - No raw temperature column on blood_components (avoids row contention
+//   on every sensor reading; see TemperatureReading below).
+// - outbox_events + audit_logs implement the transactional outbox pattern
+//   for the audit trail, so it never blocks a normal request.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BloodBagStatus {
+  PROCESSING
+  FINALIZED
+}
+
+enum EquipmentType {
+  FREEZER
+  REFRIGERATOR
+  PLATELET_AGITATOR
+}
+
+model Tenant {
+  id           String   @id @default(uuid())
+  name         String
+  featureFlags Json     @default("{}") @map("feature_flags")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  bloodBags       BloodBag[]
+  bloodComponents BloodComponent[]
+  equipment       Equipment[]
+
+  @@map("tenants")
+}
+
+model BloodBag {
+  id          String         @id @default(uuid())
+  tenantId    String         @map("tenant_id")
+  donationId  String         @map("donation_id")
+  collectedAt DateTime       @map("collected_at")
+  status      BloodBagStatus
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id])
+  components BloodComponent[]
+
+  @@map("blood_bags")
+}
+
+model BloodComponent {
+  id                   String    @id @default(uuid())
+  tenantId             String    @map("tenant_id")
+  bloodBagId           String    @map("blood_bag_id")
+  componentType        String    @map("component_type") // RED_BLOOD_CELLS | PLATELETS | PLASMA | CRYOPRECIPITATE
+  aboGroup             String    @map("abo_group")
+  rhFactor             String    @map("rh_factor")
+  extendedPhenotype    String?   @map("extended_phenotype")
+  status               String // see ComponentStatus enum in domain layer
+  collectedAt          DateTime  @map("collected_at")
+  expiresAt            DateTime  @map("expires_at")
+  isUnderReevaluation  Boolean   @default(false) @map("is_under_reevaluation")
+  reservedBy           String?   @map("reserved_by")
+  reservationKind      String?   @map("reservation_kind") // ELECTIVE | EMERGENCY
+  reservationExpiresAt DateTime? @map("reservation_expires_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  // ON DELETE RESTRICT: a blood bag can never be deleted while it still
+  // has derived components — this is a regulatory traceability requirement,
+  // not just a technical constraint.
+  bloodBag BloodBag @relation(fields: [bloodBagId], references: [id], onDelete: Restrict)
+
+  @@map("blood_components")
+}
+
+model Equipment {
+  id             String        @id @default(uuid())
+  tenantId       String        @map("tenant_id")
+  equipmentType  EquipmentType @map("equipment_type")
+  minTemperature Float         @map("min_temperature")
+  maxTemperature Float         @map("max_temperature")
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id])
+  temperatureReadings TemperatureReading[]
+
+  @@map("equipment")
+}
+
+model TemperatureReading {
+  id          String   @id @default(uuid())
+  equipmentId String   @map("equipment_id")
+  value       Float
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@map("temperature_readings")
+}
+
+// Transactional outbox: written in the SAME transaction as the aggregate
+// state change. A background worker consumes this table and writes to
+// audit_logs asynchronously - see docs/fase-1.md, section 3.
+model OutboxEvent {
+  id            String   @id @default(uuid())
+  aggregateId   String   @map("aggregate_id")
+  aggregateType String   @map("aggregate_type")
+  eventName     String   @map("event_name")
+  payload       Json
+  occurredAt    DateTime @map("occurred_at")
+  processed     Boolean  @default(false)
+
+  @@map("outbox_events")
+}
+
+// Append-only audit trail. In production this table (or an entirely
+// separate database/schema) should have UPDATE and DELETE revoked at the
+// database permission level.
+model AuditLog {
+  id            String   @id @default(uuid())
+  aggregateId   String   @map("aggregate_id")
+  aggregateType String   @map("aggregate_type")
+  eventName     String   @map("event_name")
+  actorId       String?  @map("actor_id")
+  payload       Json
+  occurredAt    DateTime @map("occurred_at")
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,107 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BloodComponent } from '../../src/modules/inventory/domain/entities/blood-component.entity';
+import { ComponentType } from '../../src/modules/inventory/domain/enums/component-type.enum';
+import { ComponentStatus } from '../../src/modules/inventory/domain/enums/component-status.enum';
+import { DiscardReason } from '../../src/modules/inventory/domain/enums/discard-reason.enum';
+import { AboGroup, BloodType, RhFactor } from '../../src/modules/inventory/domain/value-objects/blood-type.vo';
+import { ValidityPeriod } from '../../src/modules/inventory/domain/value-objects/validity-period.vo';
+import { Reservation } from '../../src/modules/inventory/domain/value-objects/reservation.vo';
+import { DomainError } from '../../src/shared/domain/domain-error';
+
+function buildFreshComponent(): BloodComponent {
+  return BloodComponent.separate({
+    id: 'component-1',
+    tenantId: 'tenant-1',
+    bloodBagId: 'bag-1',
+    componentType: ComponentType.PLATELETS,
+    bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
+    validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 5),
+  });
+}
+
+describe('BloodComponent', () => {
+  beforeEach(() => {
+    // Fixed "now" matching the collection date used across these tests,
+    // so validity/expiration checks don't depend on the real system clock.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('enters quarantine immediately upon separation - there is no path that skips it', () => {
+    const component = buildFreshComponent();
+    expect(component.status).toBe(ComponentStatus.IN_QUARANTINE);
+  });
+
+  it('raises ComponentSeparated and QuarantineStarted events on separation', () => {
+    const component = buildFreshComponent();
+    const events = component.pullDomainEvents().map((event) => event.eventName);
+    expect(events).toEqual(['ComponentSeparated', 'QuarantineStarted']);
+  });
+
+  it('moves from IN_QUARANTINE to CLEARED on releaseFromQuarantine', () => {
+    const component = buildFreshComponent();
+    component.pullDomainEvents();
+
+    component.releaseFromQuarantine();
+
+    expect(component.status).toBe(ComponentStatus.CLEARED);
+  });
+
+  it('refuses to release from quarantine twice', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+
+    expect(() => component.releaseFromQuarantine()).toThrow(DomainError);
+  });
+
+  it('refuses to store a component that has not been cleared yet', () => {
+    const component = buildFreshComponent();
+    expect(() => component.store()).toThrow(DomainError);
+  });
+
+  it('follows the full happy path: quarantine -> cleared -> stored -> reserved -> allocated', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store();
+    component.reserve(Reservation.emergency('hospital-1', 2));
+    component.allocate();
+
+    expect(component.status).toBe(ComponentStatus.ALLOCATED);
+  });
+
+  it('refuses to reserve an expired component even though its status is STORED', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store();
+
+    // 9 days after separation - platelets have a 5-day validity window.
+    vi.setSystemTime(new Date('2026-01-10T00:00:00.000Z'));
+
+    const reservation = Reservation.emergency('hospital-1', 2);
+    expect(() => component.reserve(reservation)).toThrow(DomainError);
+  });
+
+  it('requires an explicit reason to discard a component', () => {
+    const component = buildFreshComponent();
+    component.discard(DiscardReason.POSITIVE_SEROLOGY);
+    expect(component.status).toBe(ComponentStatus.DISCARDED);
+  });
+
+  it('refuses to discard a component twice', () => {
+    const component = buildFreshComponent();
+    component.discard(DiscardReason.PROCESS_FAILURE);
+    expect(() => component.discard(DiscardReason.EXPIRED)).toThrow(DomainError);
+  });
+
+  it('flags itself for reevaluation without changing its status (human confirmation still required)', () => {
+    const component = buildFreshComponent();
+    component.flagForReevaluation();
+
+    expect(component.isUnderReevaluation).toBe(true);
+    expect(component.status).toBe(ComponentStatus.IN_QUARANTINE);
+  });
+});
