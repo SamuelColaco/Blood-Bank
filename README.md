@@ -1,6 +1,6 @@
 # Blood Bank System
 
-Sistema multi-tenant de gestão de banco de sangue, com regras de negócio de compliance embutidas no domínio (não em validação de formulário) e rastreabilidade de ponta a ponta do ciclo do sangue.
+Sistema multi-tenant de gestão de banco de sangue, com regras de negócio de compliance embutidas no domínio e rastreabilidade de ponta a ponta do ciclo do sangue.
 
 > Este repositório contém a **Fase 1 (Fundação de Estoque)** — o bounded context de **Inventário**. As demais fases (Doação & Triagem, Distribuição, Rede & Intercâmbio) ainda não foram iniciadas — ver `docs/roadmap.md`.
 
@@ -17,7 +17,7 @@ Sistema multi-tenant de gestão de banco de sangue, com regras de negócio de co
 | Enforcement de arquitetura | dependency-cruiser |
 | Banco de dados | PostgreSQL |
 
-## Princípios Arquiteturais (não negociáveis)
+## Princípios Arquiteturais
 
 1. **Domínio 100% puro.** `src/modules/*/domain/` nunca importa NestJS, Prisma, ou qualquer pacote de infraestrutura. Isso não é convenção — é regra de CI (`npm run lint:architecture`, via `.dependency-cruiser.js`). Um PR que viole essa regra quebra o build.
 2. **Compliance é regra de domínio, não middleware.** Transições de estado como liberação de quarentena, cálculo de validade e a exigência de motivo obrigatório para descarte vivem nos Aggregates, não em validadores externos.
@@ -51,7 +51,7 @@ npm run lint:architecture   # confirma que o domínio continua puro
 npm run start:dev
 ```
 
-## Escopo Deliberadamente Fora Desta Fase (e do produto, por ora)
+## Escopo Deliberadamente Fora Desta Fase
 
 Regras médicas cinzentas que dependem de validação clínica externa — como liberação condicional de plaquetas sob escassez crítica, ou qualquer variante do tipo da Resolução CFM nº 2.464/2026 (PRP) — **não fazem parte do domínio modelado aqui**. Essa foi uma decisão consciente da equipe: o ciclo do `BloodComponent` permanece simples e seguro (`IN_QUARANTINE → CLEARED | REJECTED`, sem estado intermediário). Só volta à mesa se um comitê clínico assumir formalmente a responsabilidade pela regra.
 
