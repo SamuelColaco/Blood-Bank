@@ -2,16 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IBloodComponentRepository } from '../../../domain/repositories/blood-component.repository';
 import { Reservation, ReservationKind } from '../../../domain/value-objects/reservation.vo';
+import { TenantSettings } from '../../../domain/value-objects/tenant-settings.vo';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { BLOOD_COMPONENT_REPOSITORY, OUTBOX_EVENT_WRITER } from '../../tokens';
-
-/**
- * Default reservation timeouts (see DECISOES-HOTSPOTS.md). These should
- * become per-tenant configuration before Phase 3 (Distribution) - hardcoded
- * here only because Phase 1 has no tenant configuration mechanism yet.
- */
-const ELECTIVE_RESERVATION_TIMEOUT_DAYS = 3;
-const EMERGENCY_RESERVATION_TIMEOUT_HOURS = 2;
+import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { ITenantSettingsRepository } from '../../../domain/repositories/tenant-settings.repository';
+import { BLOOD_COMPONENT_REPOSITORY, OUTBOX_EVENT_WRITER, TRANSACTION_RUNNER, TENANT_SETTINGS_REPOSITORY } from '../../tokens';
 
 export interface ReserveComponentInput {
   componentId: string;
@@ -26,7 +21,9 @@ export class ReserveComponentUseCase {
     @Inject(BLOOD_COMPONENT_REPOSITORY)
     private readonly bloodComponentRepository: IBloodComponentRepository,
     @Inject(OUTBOX_EVENT_WRITER) private readonly outboxEventWriter: IOutboxEventWriter,
-  ) {}
+    @Inject(TRANSACTION_RUNNER) private readonly transactionRunner: ITransactionRunner,
+    @Inject(TENANT_SETTINGS_REPOSITORY) private readonly tenantSettingsRepository: ITenantSettingsRepository,
+  ) { }
 
   async execute(input: ReserveComponentInput): Promise<void> {
     const component = await this.bloodComponentRepository.findById(input.componentId);
@@ -34,14 +31,19 @@ export class ReserveComponentUseCase {
       throw new DomainError(`Blood component ${input.componentId} was not found.`);
     }
 
+    const settings = await this.tenantSettingsRepository.findByTenantId(component.tenantId);
+    const effectiveSettings = settings ?? TenantSettings.defaults(component.tenantId);
+
     const reservation =
       input.kind === 'ELECTIVE'
-        ? Reservation.elective(input.requestedBy, ELECTIVE_RESERVATION_TIMEOUT_DAYS)
-        : Reservation.emergency(input.requestedBy, EMERGENCY_RESERVATION_TIMEOUT_HOURS);
+        ? Reservation.elective(input.requestedBy, effectiveSettings.electiveReservationTimeoutInDays)
+        : Reservation.emergency(input.requestedBy, effectiveSettings.emergencyReservationTimeoutInHours);
 
     component.reserve(reservation);
 
-    await this.bloodComponentRepository.save(component);
-    await this.outboxEventWriter.write(component.pullDomainEvents());
+    await this.transactionRunner.runInTransaction(async (scope) => {
+      await this.bloodComponentRepository.save(component, scope);
+      await this.outboxEventWriter.write(component.pullDomainEvents(), scope);
+    });
   }
 }

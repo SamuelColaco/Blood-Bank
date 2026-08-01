@@ -1,6 +1,8 @@
 import { Equipment } from '../entities/equipment.entity';
+import { ITransactionScope } from '../ports/transaction-scope.port';
 
 export interface IEquipmentRepository {
   findById(id: string): Promise<Equipment | null>;
-  save(equipment: Equipment): Promise<void>;
+  save(equipment: Equipment, scope?: ITransactionScope): Promise<void>;
+
 }

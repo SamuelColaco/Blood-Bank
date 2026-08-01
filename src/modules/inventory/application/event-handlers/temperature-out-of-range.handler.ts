@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TemperatureOutOfRangeDetectedEvent } from '../../domain/events/equipment.events';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
+import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { BLOOD_COMPONENT_REPOSITORY } from '../tokens';
 
 /**
@@ -21,7 +22,7 @@ export class TemperatureOutOfRangeHandler {
   constructor(
     @Inject(BLOOD_COMPONENT_REPOSITORY)
     private readonly bloodComponentRepository: IBloodComponentRepository,
-  ) {}
+  ) { }
 
   async handle(event: TemperatureOutOfRangeDetectedEvent): Promise<void> {
     const affectedComponents = await this.bloodComponentRepository.findStoredInEquipment(

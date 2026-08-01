@@ -1,4 +1,5 @@
 import { BloodBag } from '../entities/blood-bag.entity';
+import { ITransactionScope } from '../ports/transaction-scope.port';
 
 /**
  * Port (interface) for persisting and retrieving BloodBag aggregates.
@@ -7,5 +8,5 @@ import { BloodBag } from '../entities/blood-bag.entity';
  */
 export interface IBloodBagRepository {
   findById(id: string): Promise<BloodBag | null>;
-  save(bloodBag: BloodBag): Promise<void>;
+  save(bloodBag: BloodBag, scope?: ITransactionScope): Promise<void>;
 }

@@ -3,10 +3,12 @@ import { BloodComponent } from '../../domain/entities/blood-component.entity';
 import { ComponentStatus } from '../../domain/enums/component-status.enum';
 import { ComponentType } from '../../domain/enums/component-type.enum';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
+import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { AboGroup, BloodType, RhFactor } from '../../domain/value-objects/blood-type.vo';
 import { Reservation, ReservationKind } from '../../domain/value-objects/reservation.vo';
 import { ValidityPeriod } from '../../domain/value-objects/validity-period.vo';
 import { PrismaService } from './prisma.service';
+import { PrismaTransactionRunner } from './prisma-transaction-runner';
 
 // Prisma's generated row type isn't imported directly here to keep this
 // file readable; `any` below is intentionally narrow-scoped to the
@@ -21,7 +23,10 @@ import { PrismaService } from './prisma.service';
  */
 @Injectable()
 export class BloodComponentPrismaRepository implements IBloodComponentRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transactionRunner: PrismaTransactionRunner,
+  ) { }
 
   async findById(id: string): Promise<BloodComponent | null> {
     const row = await this.prisma.bloodComponent.findUnique({ where: { id } });
@@ -29,28 +34,24 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
   }
 
   async findStoredInEquipment(equipmentId: string): Promise<BloodComponent[]> {
-    // Phase 1 does not yet persist a direct equipment_id relationship on
-    // blood_components (storage location tracking belongs to a later
-    // iteration of this schema - see docs/roadmap.md). For now this
-    // returns every component with status STORED for the given tenant's
-    // equipment, which is a placeholder until that relationship exists.
-    const equipment = await this.prisma.equipment.findUnique({ where: { id: equipmentId } });
-    if (!equipment) {
-      return [];
-    }
     const rows = await this.prisma.bloodComponent.findMany({
-      where: { tenantId: equipment.tenantId, status: ComponentStatus.STORED },
+      where: { equipmentId, status: ComponentStatus.STORED },
     });
     return rows.map((row: any) => this.toDomain(row));
   }
 
-  async save(component: BloodComponent): Promise<void> {
-    await this.prisma.bloodComponent.upsert({
+  async save(component: BloodComponent, scope?: ITransactionScope): Promise<void> {
+    const client = scope
+      ? this.transactionRunner.getTransactionClient(scope) ?? this.prisma
+      : this.prisma;
+
+    await client.bloodComponent.upsert({
       where: { id: component.id },
       create: {
         id: component.id,
         tenantId: component.tenantId,
         bloodBagId: component.bloodBagId,
+        equipmentId: component.equipmentId,
         componentType: component.componentType,
         aboGroup: component.bloodType.aboGroup,
         rhFactor: component.bloodType.rhFactor,
@@ -65,6 +66,7 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
       },
       update: {
         status: component.status,
+        equipmentId: component.equipmentId,
         isUnderReevaluation: component.isUnderReevaluation,
         reservedBy: component.reservation?.requestedBy ?? null,
         reservationKind: component.reservation?.kind ?? null,
@@ -80,10 +82,6 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
       row.extendedPhenotype ?? undefined,
     );
 
-    // Prisma stores collectedAt/expiresAt directly, so ValidityPeriod is
-    // reconstructed from the two stored dates rather than recalculated -
-    // recalculating on load would silently change history if the
-    // validity table ever changes.
     const validityPeriod = ValidityPeriod.restore(row.collectedAt, row.expiresAt);
 
     const reservation =
@@ -101,6 +99,7 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
       status: row.status as ComponentStatus,
       isUnderReevaluation: row.isUnderReevaluation,
       reservation,
+      equipmentId: row.equipmentId,
     });
   }
 }

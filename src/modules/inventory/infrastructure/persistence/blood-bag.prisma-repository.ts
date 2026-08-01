@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { BloodBag, BloodBagStatus } from '../../domain/entities/blood-bag.entity';
 import { IBloodBagRepository } from '../../domain/repositories/blood-bag.repository';
+import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { PrismaService } from './prisma.service';
+import { PrismaTransactionRunner } from './prisma-transaction-runner';
 
 /**
  * Prisma implementation of IBloodBagRepository. Responsible only for
@@ -10,7 +12,10 @@ import { PrismaService } from './prisma.service';
  */
 @Injectable()
 export class BloodBagPrismaRepository implements IBloodBagRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transactionRunner: PrismaTransactionRunner,
+  ) { }
 
   async findById(id: string): Promise<BloodBag | null> {
     const row = await this.prisma.bloodBag.findUnique({
@@ -31,8 +36,12 @@ export class BloodBagPrismaRepository implements IBloodBagRepository {
     });
   }
 
-  async save(bloodBag: BloodBag): Promise<void> {
-    await this.prisma.bloodBag.upsert({
+  async save(bloodBag: BloodBag, scope?: ITransactionScope): Promise<void> {
+    const client = scope
+      ? this.transactionRunner.getTransactionClient(scope) ?? this.prisma
+      : this.prisma;
+
+    await client.bloodBag.upsert({
       where: { id: bloodBag.id },
       create: {
         id: bloodBag.id,

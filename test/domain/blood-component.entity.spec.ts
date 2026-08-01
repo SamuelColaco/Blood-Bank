@@ -60,13 +60,13 @@ describe('BloodComponent', () => {
 
   it('refuses to store a component that has not been cleared yet', () => {
     const component = buildFreshComponent();
-    expect(() => component.store()).toThrow(DomainError);
+    expect(() => component.store('equipment-1')).toThrow(DomainError);
   });
 
   it('follows the full happy path: quarantine -> cleared -> stored -> reserved -> allocated', () => {
     const component = buildFreshComponent();
     component.releaseFromQuarantine();
-    component.store();
+    component.store('equipment-1');
     component.reserve(Reservation.emergency('hospital-1', 2));
     component.allocate();
 
@@ -76,7 +76,7 @@ describe('BloodComponent', () => {
   it('refuses to reserve an expired component even though its status is STORED', () => {
     const component = buildFreshComponent();
     component.releaseFromQuarantine();
-    component.store();
+    component.store('equipment-1');
 
     // 9 days after separation - platelets have a 5-day validity window.
     vi.setSystemTime(new Date('2026-01-10T00:00:00.000Z'));

@@ -55,6 +55,11 @@ npm run start:dev
 
 Regras médicas cinzentas que dependem de validação clínica externa — como liberação condicional de plaquetas sob escassez crítica, ou qualquer variante do tipo da Resolução CFM nº 2.464/2026 (PRP) — **não fazem parte do domínio modelado aqui**. Essa foi uma decisão consciente da equipe: o ciclo do `BloodComponent` permanece simples e seguro (`IN_QUARANTINE → CLEARED | REJECTED`, sem estado intermediário). Só volta à mesa se um comitê clínico assumir formalmente a responsabilidade pela regra.
 
+## Status das Lacunas da Fase 1 (docs/fase-1.md)
+
+- **Seção 2 (equipamento↔componente):** `equipmentId` adicionado ao schema, domínio e repositórios. `BloodComponent.store()` agora exige o `equipmentId`. `findStoredInEquipment` funciona de verdade. `RegisterEquipmentUseCase` + endpoint HTTP criados.
+- **Seção 3 (outbox transacional):** `PrismaTransactionRunner` + `ITransactionScope` implementados. Todos os use cases agora rodam `save()` + `write(outbox)` dentro de `prisma.$transaction(...)`. `TemperatureOutOfRangeHandler` continua operando de forma eventual (sem transação compartilhada), como projetado.
+
 ## Documentação
 
 - `docs/fase-1.md` — decisões técnicas detalhadas desta fase (schema, auditoria, offline-first, etc.)

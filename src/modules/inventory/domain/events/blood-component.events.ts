@@ -37,7 +37,10 @@ export class QuarantineRejectedEvent extends DomainEvent {
 
 export class ComponentStoredEvent extends DomainEvent {
   readonly eventName = 'ComponentStored';
-  constructor(public readonly aggregateId: string) {
+  constructor(
+    public readonly aggregateId: string,
+    public readonly equipmentId: string,
+  ) {
     super();
   }
 }

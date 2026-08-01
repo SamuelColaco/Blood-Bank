@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IEquipmentRepository } from '../../../domain/repositories/equipment.repository';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { EQUIPMENT_REPOSITORY, OUTBOX_EVENT_WRITER } from '../../tokens';
+import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { EQUIPMENT_REPOSITORY, OUTBOX_EVENT_WRITER, TRANSACTION_RUNNER } from '../../tokens';
 
 export interface RecordTemperatureReadingInput {
   equipmentId: string;
@@ -22,7 +23,8 @@ export class RecordTemperatureReadingUseCase {
   constructor(
     @Inject(EQUIPMENT_REPOSITORY) private readonly equipmentRepository: IEquipmentRepository,
     @Inject(OUTBOX_EVENT_WRITER) private readonly outboxEventWriter: IOutboxEventWriter,
-  ) {}
+    @Inject(TRANSACTION_RUNNER) private readonly transactionRunner: ITransactionRunner,
+  ) { }
 
   async execute(input: RecordTemperatureReadingInput): Promise<void> {
     const equipment = await this.equipmentRepository.findById(input.equipmentId);
@@ -32,7 +34,9 @@ export class RecordTemperatureReadingUseCase {
 
     equipment.recordTemperatureReading(input.value);
 
-    await this.equipmentRepository.save(equipment);
-    await this.outboxEventWriter.write(equipment.pullDomainEvents());
+    await this.transactionRunner.runInTransaction(async (scope) => {
+      await this.equipmentRepository.save(equipment, scope);
+      await this.outboxEventWriter.write(equipment.pullDomainEvents(), scope);
+    });
   }
 }

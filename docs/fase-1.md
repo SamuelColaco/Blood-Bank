@@ -65,8 +65,8 @@ Rodar com `npm run test` — 15 testes, todos passando.
 
 ## Próximos Passos Práticos (nesta ordem)
 
-1. Unificar `save()` do repositório + `write()` do outbox numa única transação Prisma (`prisma.$transaction`) — fecha a lacuna da seção 3.
-2. Adicionar a coluna/relação de vínculo equipamento↔componente ao schema — fecha a lacuna da seção 2.
-3. Mover os timeouts de reserva de constante hardcoded para configuração por tenant.
-4. Escrever os testes de integração dos repositórios Prisma (hoje só o domínio tem teste automatizado).
+1. ~~Unificar `save()` do repositório + `write()` do outbox numa única transação Prisma (`prisma.$transaction`) — fecha a lacuna da seção 3.~~ ✅ CONCLUÍDO
+2. ~~Adicionar a coluna/relação de vínculo equipamento↔componente ao schema — fecha a lacuna da seção 2.~~ ✅ CONCLUÍDO
+3. ~~Mover os timeouts de reserva de constante hardcoded para configuração por tenant.~~ ✅ CONCLUÍDO
+4. ~~Escrever os testes de integração dos repositórios Prisma (hoje só o domínio tem teste automatizado).~~ ✅ CONCLUÍDO (4 arquivos em `test/integration/`, executáveis via `npm run test:integration` quando o banco estiver disponível)
 5. Só depois disso, começar a Fase 2 — ver `docs/roadmap.md`.

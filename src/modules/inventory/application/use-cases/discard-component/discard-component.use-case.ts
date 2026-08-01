@@ -3,7 +3,8 @@ import { DomainError } from '../../../../../shared/domain/domain-error';
 import { DiscardReason } from '../../../domain/enums/discard-reason.enum';
 import { IBloodComponentRepository } from '../../../domain/repositories/blood-component.repository';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { BLOOD_COMPONENT_REPOSITORY, OUTBOX_EVENT_WRITER } from '../../tokens';
+import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { BLOOD_COMPONENT_REPOSITORY, OUTBOX_EVENT_WRITER, TRANSACTION_RUNNER } from '../../tokens';
 
 export interface DiscardComponentInput {
   componentId: string;
@@ -26,6 +27,7 @@ export class DiscardComponentUseCase {
     @Inject(BLOOD_COMPONENT_REPOSITORY)
     private readonly bloodComponentRepository: IBloodComponentRepository,
     @Inject(OUTBOX_EVENT_WRITER) private readonly outboxEventWriter: IOutboxEventWriter,
+    @Inject(TRANSACTION_RUNNER) private readonly transactionRunner: ITransactionRunner,
   ) { }
 
   async execute(input: DiscardComponentInput): Promise<void> {
@@ -36,7 +38,9 @@ export class DiscardComponentUseCase {
 
     component.discard(input.reason);
 
-    await this.bloodComponentRepository.save(component);
-    await this.outboxEventWriter.write(component.pullDomainEvents());
+    await this.transactionRunner.runInTransaction(async (scope) => {
+      await this.bloodComponentRepository.save(component, scope);
+      await this.outboxEventWriter.write(component.pullDomainEvents(), scope);
+    });
   }
 }

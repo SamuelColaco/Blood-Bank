@@ -3,7 +3,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BloodBag } from '../../../domain/entities/blood-bag.entity';
 import { IBloodBagRepository } from '../../../domain/repositories/blood-bag.repository';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { BLOOD_BAG_REPOSITORY, OUTBOX_EVENT_WRITER } from '../../tokens';
+import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { BLOOD_BAG_REPOSITORY, OUTBOX_EVENT_WRITER, TRANSACTION_RUNNER } from '../../tokens';
 
 export interface RegisterBloodBagInput {
   tenantId: string;
@@ -28,6 +29,7 @@ export class RegisterBloodBagUseCase {
   constructor(
     @Inject(BLOOD_BAG_REPOSITORY) private readonly bloodBagRepository: IBloodBagRepository,
     @Inject(OUTBOX_EVENT_WRITER) private readonly outboxEventWriter: IOutboxEventWriter,
+    @Inject(TRANSACTION_RUNNER) private readonly transactionRunner: ITransactionRunner,
   ) { }
 
   async execute(input: RegisterBloodBagInput): Promise<RegisterBloodBagOutput> {
@@ -38,10 +40,10 @@ export class RegisterBloodBagUseCase {
       collectedAt: input.collectedAt,
     });
 
-    // Both writes below must happen in the same database transaction in
-    // the real repository implementation - see docs/fase-1.md, section 3.
-    await this.bloodBagRepository.save(bloodBag);
-    await this.outboxEventWriter.write(bloodBag.pullDomainEvents());
+    await this.transactionRunner.runInTransaction(async (scope) => {
+      await this.bloodBagRepository.save(bloodBag, scope);
+      await this.outboxEventWriter.write(bloodBag.pullDomainEvents(), scope);
+    });
 
     return { bloodBagId: bloodBag.id };
   }

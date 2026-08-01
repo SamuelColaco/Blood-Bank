@@ -1,4 +1,5 @@
 import { DomainEvent } from '../../../../shared/domain/domain-event.base';
+import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 
 /**
  * Port for persisting domain events to the transactional outbox.
@@ -11,5 +12,5 @@ import { DomainEvent } from '../../../../shared/domain/domain-event.base';
  * append-only audit_logs table. See docs/fase-1.md, section 3.
  */
 export interface IOutboxEventWriter {
-  write(events: DomainEvent[]): Promise<void>;
+  write(events: DomainEvent[], scope?: ITransactionScope): Promise<void>;
 }

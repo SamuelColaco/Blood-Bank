@@ -8,6 +8,7 @@
     "start:dev": "nest start --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint:architecture": "depcruise --config .dependency-cruiser.js src",
     "prisma:generate": "prisma generate"
   },

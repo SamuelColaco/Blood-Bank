@@ -45,6 +45,7 @@ export class BloodComponent extends AggregateRoot<string> {
   private _status: ComponentStatus;
   private _isUnderReevaluation = false;
   private _reservation: Reservation | null = null;
+  private _equipmentId: string | null = null;
 
   private constructor(
     id: string,
@@ -103,6 +104,7 @@ export class BloodComponent extends AggregateRoot<string> {
     status: ComponentStatus;
     isUnderReevaluation: boolean;
     reservation: Reservation | null;
+    equipmentId: string | null;
   }): BloodComponent {
     const component = new BloodComponent(
       props.id,
@@ -115,6 +117,7 @@ export class BloodComponent extends AggregateRoot<string> {
     );
     component._isUnderReevaluation = props.isUnderReevaluation;
     component._reservation = props.reservation;
+    component._equipmentId = props.equipmentId;
     return component;
   }
 
@@ -128,6 +131,10 @@ export class BloodComponent extends AggregateRoot<string> {
 
   get reservation(): Reservation | null {
     return this._reservation;
+  }
+
+  get equipmentId(): string | null {
+    return this._equipmentId;
   }
 
   /**
@@ -148,11 +155,16 @@ export class BloodComponent extends AggregateRoot<string> {
     this.addDomainEvent(new QuarantineRejectedEvent(this.id));
   }
 
-  /** Moves a cleared component into active stock. */
-  store(): void {
+  /**
+   * Moves a cleared component into active stock. Storing a component
+   * always means storing it in a specific piece of equipment - the
+   * cold-chain location is mandatory for traceability.
+   */
+  store(equipmentId: string): void {
     this.assertStatus(ComponentStatus.CLEARED, 'store');
     this._status = ComponentStatus.STORED;
-    this.addDomainEvent(new ComponentStoredEvent(this.id));
+    this._equipmentId = equipmentId;
+    this.addDomainEvent(new ComponentStoredEvent(this.id, equipmentId));
   }
 
   /** Reserves the component for a hospital request. Refuses expired components even if their status is still STORED. */

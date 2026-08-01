@@ -2,11 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { Equipment } from '../../domain/entities/equipment.entity';
 import { EquipmentType } from '../../domain/enums/equipment-type.enum';
 import { IEquipmentRepository } from '../../domain/repositories/equipment.repository';
+import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { PrismaService } from './prisma.service';
+import { PrismaTransactionRunner } from './prisma-transaction-runner';
 
 @Injectable()
 export class EquipmentPrismaRepository implements IEquipmentRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transactionRunner: PrismaTransactionRunner,
+  ) { }
 
   async findById(id: string): Promise<Equipment | null> {
     const row = await this.prisma.equipment.findUnique({ where: { id } });
@@ -23,8 +28,12 @@ export class EquipmentPrismaRepository implements IEquipmentRepository {
     });
   }
 
-  async save(equipment: Equipment): Promise<void> {
-    await this.prisma.equipment.upsert({
+  async save(equipment: Equipment, scope?: ITransactionScope): Promise<void> {
+    const client = scope
+      ? this.transactionRunner.getTransactionClient(scope) ?? this.prisma
+      : this.prisma;
+
+    await client.equipment.upsert({
       where: { id: equipment.id },
       create: {
         id: equipment.id,

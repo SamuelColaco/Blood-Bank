@@ -55,6 +55,7 @@ model BloodComponent {
   id                   String    @id @default(uuid())
   tenantId             String    @map("tenant_id")
   bloodBagId           String    @map("blood_bag_id")
+  equipmentId          String?   @map("equipment_id")
   componentType        String    @map("component_type") // RED_BLOOD_CELLS | PLATELETS | PLASMA | CRYOPRECIPITATE
   aboGroup             String    @map("abo_group")
   rhFactor             String    @map("rh_factor")
@@ -67,11 +68,12 @@ model BloodComponent {
   reservationKind      String?   @map("reservation_kind") // ELECTIVE | EMERGENCY
   reservationExpiresAt DateTime? @map("reservation_expires_at")
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
   // ON DELETE RESTRICT: a blood bag can never be deleted while it still
   // has derived components — this is a regulatory traceability requirement,
   // not just a technical constraint.
-  bloodBag BloodBag @relation(fields: [bloodBagId], references: [id], onDelete: Restrict)
+  bloodBag  BloodBag   @relation(fields: [bloodBagId], references: [id], onDelete: Restrict)
+  equipment Equipment? @relation(fields: [equipmentId], references: [id])
 
   @@map("blood_components")
 }
@@ -85,6 +87,7 @@ model Equipment {
 
   tenant              Tenant               @relation(fields: [tenantId], references: [id])
   temperatureReadings TemperatureReading[]
+  components          BloodComponent[]
 
   @@map("equipment")
 }
