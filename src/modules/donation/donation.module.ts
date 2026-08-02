@@ -1,5 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DonationInfrastructureModule } from './infrastructure/donation.infrastructure.module';
+import { RegisterDonorUseCase } from './application/use-cases/register-donor/register-donor.use-case';
+import { ScheduleAppointmentUseCase } from './application/use-cases/schedule-appointment/schedule-appointment.use-case';
+import { RecordQuestionnaireResponseUseCase } from './application/use-cases/record-questionnaire-response/record-questionnaire-response.use-case';
+import { RecordVitalSignsUseCase } from './application/use-cases/record-vital-signs/record-vital-signs.use-case';
+import { ApproveDonationUseCase } from './application/use-cases/approve-donation/approve-donation.use-case';
+import { StartCollectionUseCase } from './application/use-cases/start-collection/start-collection.use-case';
+import { CompleteCollectionUseCase } from './application/use-cases/complete-collection/complete-collection.use-case';
+import { PublishQuestionnaireVersionUseCase } from './application/use-cases/publish-questionnaire-version/publish-questionnaire-version.use-case';
+import { SyncOfflineDataUseCase } from './application/use-cases/sync-offline-data/sync-offline-data.use-case';
 
 /**
  * Donation & Screening bounded context module.
@@ -12,5 +21,27 @@ import { DonationInfrastructureModule } from './infrastructure/donation.infrastr
  */
 @Module({
     imports: [DonationInfrastructureModule],
+    providers: [
+        RegisterDonorUseCase,
+        ScheduleAppointmentUseCase,
+        RecordQuestionnaireResponseUseCase,
+        RecordVitalSignsUseCase,
+        ApproveDonationUseCase,
+        StartCollectionUseCase,
+        CompleteCollectionUseCase,
+        PublishQuestionnaireVersionUseCase,
+        SyncOfflineDataUseCase,
+    ],
+    exports: [
+        RegisterDonorUseCase,
+        ScheduleAppointmentUseCase,
+        RecordQuestionnaireResponseUseCase,
+        RecordVitalSignsUseCase,
+        ApproveDonationUseCase,
+        StartCollectionUseCase,
+        CompleteCollectionUseCase,
+        PublishQuestionnaireVersionUseCase,
+        SyncOfflineDataUseCase,
+    ],
 })
 export class DonationModule { }

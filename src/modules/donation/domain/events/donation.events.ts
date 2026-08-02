@@ -132,24 +132,6 @@ export class CollectionCompletedEvent extends DomainEvent {
     }
 }
 
-export class DonationCollectedEvent extends DomainEvent {
-    readonly eventName = 'DonationCollected';
-    constructor(
-        public readonly aggregateId: string,
-        public readonly donationId: string,
-        public readonly tenantId: string,
-        public readonly donorId: string,
-        public readonly collectedAt: Date,
-        public readonly donationType: 'WHOLE_BLOOD' | 'APHERESIS',
-        public readonly donationPurpose: 'GENERAL' | 'AUTOLOGOUS' | 'DIRECTED',
-        public readonly designatedRecipientId: string | null,
-        public readonly isbtRangeAllocatedTo: string,
-        public readonly questionnaireVersionId: string,
-    ) {
-        super();
-    }
-}
-
 export class QuestionnaireVersionPublishedEvent extends DomainEvent {
     readonly eventName = 'QuestionnaireVersionPublished';
     constructor(
