@@ -51,7 +51,7 @@ export class ScheduleAppointmentUseCase {
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.appointmentRepository.save(appointment, scope);
-            await this.outboxEventWriter.write(appointment.pullDomainEvents());
+            await this.outboxEventWriter.write(appointment.pullDomainEvents(), scope);
         });
 
         return { appointmentId: appointment.id };

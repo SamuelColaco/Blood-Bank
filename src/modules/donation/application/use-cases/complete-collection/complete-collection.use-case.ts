@@ -45,7 +45,7 @@ export class CompleteCollectionUseCase {
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.donationRepository.save(donation, scope);
-            await this.outboxEventWriter.write(donation.pullDomainEvents());
+            await this.outboxEventWriter.write(donation.pullDomainEvents(), scope);
         });
 
         return { success: true };

@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Donation } from '../../../domain/entities/donation.entity';
 import { IDonationRepository } from '../../../domain/repositories/donation.repository';
 import { IOutboxEventWriter } from '../../../../../shared/domain/ports/outbox-event-writer.port';
 import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
@@ -47,7 +46,7 @@ export class ApproveDonationUseCase {
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.donationRepository.save(donation, scope);
-            await this.outboxEventWriter.write(donation.pullDomainEvents());
+            await this.outboxEventWriter.write(donation.pullDomainEvents(), scope);
         });
 
         return { success: true };

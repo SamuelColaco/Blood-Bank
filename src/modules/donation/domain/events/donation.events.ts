@@ -1,4 +1,5 @@
 import { DomainEvent } from '../../../../shared/domain/domain-event.base';
+import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 
 /**
  * Domain events for the Donation & Screening bounded context.
@@ -86,7 +87,7 @@ export class DonationApprovedEvent extends DomainEvent {
         public readonly donationId: string,
         public readonly donorId: string,
         public readonly donationType: 'WHOLE_BLOOD' | 'APHERESIS',
-        public readonly donationPurpose: 'GENERAL' | 'AUTOLOGOUS' | 'DIRECTED',
+        public readonly donationPurpose: DonationPurpose,
         public readonly designatedRecipientId: string | null,
     ) {
         super();
@@ -124,7 +125,7 @@ export class CollectionCompletedEvent extends DomainEvent {
         public readonly donationId: string,
         public readonly donorId: string,
         public readonly donationType: 'WHOLE_BLOOD' | 'APHERESIS',
-        public readonly donationPurpose: 'GENERAL' | 'AUTOLOGOUS' | 'DIRECTED',
+        public readonly donationPurpose: DonationPurpose,
         public readonly designatedRecipientId: string | null,
         public readonly collectedAt: Date,
     ) {

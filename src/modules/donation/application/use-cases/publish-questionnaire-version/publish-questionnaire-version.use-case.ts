@@ -46,7 +46,7 @@ export class PublishQuestionnaireVersionUseCase {
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.questionnaireRepository.save(version, scope);
-            await this.outboxEventWriter.write(version.pullDomainEvents());
+            await this.outboxEventWriter.write(version.pullDomainEvents(), scope);
         });
 
         return {

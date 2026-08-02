@@ -43,10 +43,10 @@ export class StartCollectionUseCase {
 
     donation.startCollection();
 
-        await this.transactionRunner.runInTransaction(async (scope) => {
-            await this.donationRepository.save(donation, scope);
-            await this.outboxEventWriter.write(donation.pullDomainEvents());
-        });
+    await this.transactionRunner.runInTransaction(async (scope) => {
+      await this.donationRepository.save(donation, scope);
+      await this.outboxEventWriter.write(donation.pullDomainEvents(), scope);
+    });
 
     return { success: true };
   }

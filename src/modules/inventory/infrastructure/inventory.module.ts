@@ -11,6 +11,7 @@ import { DiscardComponentUseCase } from '../application/use-cases/discard-compon
 import { RecordTemperatureReadingUseCase } from '../application/use-cases/record-temperature-reading/record-temperature-reading.use-case';
 import { RegisterEquipmentUseCase } from '../application/use-cases/register-equipment/register-equipment.use-case';
 import { TemperatureOutOfRangeHandler } from '../application/event-handlers/temperature-out-of-range.handler';
+import { DonationCollectedHandler } from '../application/event-handlers/donation-collected.handler';
 import {
   BLOOD_BAG_REPOSITORY,
   BLOOD_COMPONENT_REPOSITORY,
@@ -57,6 +58,7 @@ import { InventoryController } from '../presentation/controllers/inventory.contr
     RecordTemperatureReadingUseCase,
     RegisterEquipmentUseCase,
     TemperatureOutOfRangeHandler,
+    DonationCollectedHandler,
   ],
 })
 export class InventoryModule { }

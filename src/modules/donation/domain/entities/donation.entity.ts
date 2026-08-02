@@ -1,11 +1,11 @@
 import { AggregateRoot } from '../../../../shared/domain/aggregate-root.base';
 import { DomainError } from '../../../../shared/domain/domain-error';
 import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
+import { DonationCollectedEvent } from '../../../../shared/domain/events/donation-collected.event';
 import {
     CollectionCompletedEvent,
     CollectionStartedEvent,
     DonationApprovedEvent,
-    DonationCollectedEvent,
     DonationRejectedEvent,
     EligibilityCriteriaMetEvent,
     ExclusionCriteriaTriggeredEvent,
