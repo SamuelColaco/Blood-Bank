@@ -7,6 +7,7 @@ import { ComponentStatus } from '../../../src/modules/inventory/domain/enums/com
 import { ComponentType } from '../../../src/modules/inventory/domain/enums/component-type.enum';
 import { AboGroup, BloodType, RhFactor } from '../../../src/modules/inventory/domain/value-objects/blood-type.vo';
 import { ValidityPeriod } from '../../../src/modules/inventory/domain/value-objects/validity-period.vo';
+import { DonationPurpose } from '../../../src/shared/domain/donation-purpose.enum';
 import { prisma } from '../setup';
 
 describe('BloodComponentPrismaRepository (integration)', () => {
@@ -22,6 +23,8 @@ describe('BloodComponentPrismaRepository (integration)', () => {
             componentType: ComponentType.RED_BLOOD_CELLS,
             bloodType: BloodType.create(AboGroup.A, RhFactor.POSITIVE),
             validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 42),
+            donationPurpose: DonationPurpose.GENERAL,
+            designatedRecipientId: null,
         });
 
         component.releaseFromQuarantine();
@@ -43,6 +46,8 @@ describe('BloodComponentPrismaRepository (integration)', () => {
             componentType: ComponentType.PLASMA,
             bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
             validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 365),
+            donationPurpose: DonationPurpose.GENERAL,
+            designatedRecipientId: null,
         });
         componentA.releaseFromQuarantine();
         componentA.store('equipment-1');
@@ -54,6 +59,8 @@ describe('BloodComponentPrismaRepository (integration)', () => {
             componentType: ComponentType.PLATELETS,
             bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
             validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 5),
+            donationPurpose: DonationPurpose.GENERAL,
+            designatedRecipientId: null,
         });
         componentB.releaseFromQuarantine();
         componentB.store('equipment-2');

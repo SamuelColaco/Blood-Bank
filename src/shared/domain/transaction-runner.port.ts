@@ -1,3 +1,5 @@
+import { ITransactionScope } from './transaction-scope.port';
+
 /**
  * Abstraction for running a callback inside a single database transaction.
  *

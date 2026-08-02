@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { InventoryModule } from './modules/inventory/infrastructure/inventory.module';
+import { DonationModule } from './modules/donation/donation.module';
 
 /**
  * Root application module. Each bounded context is wired as its own
@@ -8,6 +9,6 @@ import { InventoryModule } from './modules/inventory/infrastructure/inventory.mo
  * (see docs/roadmap.md).
  */
 @Module({
-  imports: [InventoryModule],
+  imports: [InventoryModule, DonationModule],
 })
-export class AppModule {}
+export class AppModule { }

@@ -10,6 +10,8 @@ export const registerBloodBagSchema = z.object({
   tenantId: z.string().uuid(),
   donationId: z.string().uuid(),
   collectedAt: z.coerce.date(),
+  donationPurpose: z.enum(['GENERAL', 'AUTOLOGOUS', 'DIRECTED']),
+  designatedRecipientId: z.string().uuid().optional(),
 });
 
 export type RegisterBloodBagDto = z.infer<typeof registerBloodBagSchema>;

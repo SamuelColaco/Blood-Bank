@@ -3,6 +3,7 @@ import { BloodBagPrismaRepository } from '../../../src/modules/inventory/infrast
 import { PrismaService } from '../../../src/modules/inventory/infrastructure/persistence/prisma.service';
 import { PrismaTransactionRunner } from '../../../src/modules/inventory/infrastructure/persistence/prisma-transaction-runner';
 import { BloodBag } from '../../../src/modules/inventory/domain/entities/blood-bag.entity';
+import { DonationPurpose } from '../../../src/shared/domain/donation-purpose.enum';
 import { prisma } from '../setup';
 
 describe('BloodBagPrismaRepository (integration)', () => {
@@ -16,6 +17,8 @@ describe('BloodBagPrismaRepository (integration)', () => {
       tenantId: 'tenant-1',
       donationId: 'donation-1',
       collectedAt: new Date('2026-01-01'),
+      donationPurpose: DonationPurpose.GENERAL,
+      designatedRecipientId: undefined,
     });
 
     bloodBag.registerDerivedComponent('component-1');

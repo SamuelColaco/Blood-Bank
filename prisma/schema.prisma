@@ -38,15 +38,24 @@ enum DonationPurpose {
   DIRECTED
 }
 
+enum DonationType {
+  WHOLE_BLOOD
+  APHERESIS
+}
+
 model Tenant {
   id           String   @id @default(uuid())
   name         String
   featureFlags Json     @default("{}") @map("feature_flags")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  bloodBags       BloodBag[]
-  bloodComponents BloodComponent[]
-  equipment       Equipment[]
+  bloodBags                     BloodBag[]
+  bloodComponents               BloodComponent[]
+  equipment                     Equipment[]
+  donors                        Donor[]
+  donationAppointments          DonationAppointment[]
+  clinicalQuestionnaireVersions ClinicalQuestionnaireVersion[]
+  donations                     Donation[]
 
   @@map("tenants")
 }
@@ -148,4 +157,80 @@ model AuditLog {
   occurredAt    DateTime @map("occurred_at")
 
   @@map("audit_logs")
+}
+
+// Donation & Screening bounded context models
+model Donor {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  fullName   String   @map("full_name")
+  documentId String   @map("document_id")
+  birthDate  DateTime @map("birth_date")
+  gender     String // MALE | FEMALE
+  status     String // ACTIVE | INACTIVE
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [id])
+  appointments DonationAppointment[]
+  donations    Donation[]
+
+  @@unique([tenantId, documentId])
+  @@map("donors")
+}
+
+model DonationAppointment {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  donorId     String   @map("donor_id")
+  scheduledAt DateTime @map("scheduled_at")
+  status      String // SCHEDULED | COMPLETED | CANCELLED | NO_SHOW
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  donor    Donor     @relation(fields: [donorId], references: [id])
+  donation Donation?
+
+  @@map("donation_appointments")
+}
+
+model ClinicalQuestionnaireVersion {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  versionNumber Int      @map("version_number")
+  publishedAt   DateTime @map("published_at")
+  publishedBy   String   @map("published_by")
+  questions     Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  donations Donation[]
+
+  @@unique([tenantId, versionNumber])
+  @@map("clinical_questionnaire_versions")
+}
+
+model Donation {
+  id                     String          @id @default(uuid())
+  tenantId               String          @map("tenant_id")
+  donorId                String          @map("donor_id")
+  appointmentId          String?         @unique @map("appointment_id")
+  donationType           DonationType    @map("donation_type")
+  donationPurpose        DonationPurpose @map("donation_purpose")
+  designatedRecipientId  String?         @map("designated_recipient_id")
+  questionnaireSnapshot  Json?           @map("questionnaire_snapshot")
+  vitalSignsRecorded     Boolean         @default(false) @map("vital_signs_recorded")
+  apheresisSession       Json?           @map("apheresis_session")
+  collectedAt            DateTime?       @map("collected_at")
+  questionnaireVersionId String?         @map("questionnaire_version_id")
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+
+  tenant        Tenant                        @relation(fields: [tenantId], references: [id])
+  donor         Donor                         @relation(fields: [donorId], references: [id])
+  appointment   DonationAppointment?          @relation(fields: [appointmentId], references: [id])
+  questionnaire ClinicalQuestionnaireVersion? @relation(fields: [questionnaireVersionId], references: [id])
+
+  @@map("donations")
 }

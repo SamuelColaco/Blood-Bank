@@ -8,6 +8,7 @@ import { ComponentType } from '../../../src/modules/inventory/domain/enums/compo
 import { AboGroup, BloodType, RhFactor } from '../../../src/modules/inventory/domain/value-objects/blood-type.vo';
 import { ValidityPeriod } from '../../../src/modules/inventory/domain/value-objects/validity-period.vo';
 import { DomainEvent } from '../../../src/shared/domain/domain-event.base';
+import { DonationPurpose } from '../../../src/shared/domain/donation-purpose.enum';
 import { prisma } from '../setup';
 
 describe('Outbox transactional atomicity (integration)', () => {
@@ -32,6 +33,8 @@ describe('Outbox transactional atomicity (integration)', () => {
             componentType: ComponentType.RED_BLOOD_CELLS,
             bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
             validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 42),
+            donationPurpose: DonationPurpose.GENERAL,
+            designatedRecipientId: null,
         });
 
         // Force a real database failure inside the transaction by saving the
@@ -44,6 +47,8 @@ describe('Outbox transactional atomicity (integration)', () => {
             componentType: ComponentType.RED_BLOOD_CELLS,
             bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
             validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 42),
+            donationPurpose: DonationPurpose.GENERAL,
+            designatedRecipientId: null,
         });
         componentWithInvalidFk.store('equipment-1');
 
