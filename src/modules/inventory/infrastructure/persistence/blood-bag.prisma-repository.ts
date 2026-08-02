@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BloodBag, BloodBagStatus } from '../../domain/entities/blood-bag.entity';
+import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IBloodBagRepository } from '../../domain/repositories/blood-bag.repository';
 import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { PrismaService } from './prisma.service';
@@ -31,6 +32,8 @@ export class BloodBagPrismaRepository implements IBloodBagRepository {
       tenantId: row.tenantId,
       donationId: row.donationId,
       collectedAt: row.collectedAt,
+      donationPurpose: row.donationPurpose as DonationPurpose,
+      designatedRecipientId: row.designatedRecipientId,
       status: row.status as BloodBagStatus,
       componentIds: row.components.map((component: { id: string }) => component.id),
     });
@@ -48,9 +51,13 @@ export class BloodBagPrismaRepository implements IBloodBagRepository {
         tenantId: bloodBag.tenantId,
         donationId: bloodBag.donationId,
         collectedAt: bloodBag.collectedAt,
+        donationPurpose: bloodBag.donationPurpose,
+        designatedRecipientId: bloodBag.designatedRecipientId,
         status: bloodBag.status,
       },
       update: {
+        donationPurpose: bloodBag.donationPurpose,
+        designatedRecipientId: bloodBag.designatedRecipientId,
         status: bloodBag.status,
       },
     });

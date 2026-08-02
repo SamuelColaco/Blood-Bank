@@ -1,5 +1,6 @@
 import { AggregateRoot } from '../../../../shared/domain/aggregate-root.base';
 import { DomainError } from '../../../../shared/domain/domain-error';
+import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { ComponentStatus } from '../enums/component-status.enum';
 import { ComponentType } from '../enums/component-type.enum';
 import { DiscardReason } from '../enums/discard-reason.enum';
@@ -54,6 +55,8 @@ export class BloodComponent extends AggregateRoot<string> {
     public readonly componentType: ComponentType,
     public readonly bloodType: BloodType,
     public readonly validityPeriod: ValidityPeriod,
+    public readonly donationPurpose: DonationPurpose,
+    public readonly designatedRecipientId: string | null,
     status: ComponentStatus,
   ) {
     super(id);
@@ -72,6 +75,8 @@ export class BloodComponent extends AggregateRoot<string> {
     componentType: ComponentType;
     bloodType: BloodType;
     validityPeriod: ValidityPeriod;
+    donationPurpose: DonationPurpose;
+    designatedRecipientId: string | null;
   }): BloodComponent {
     const component = new BloodComponent(
       props.id,
@@ -80,6 +85,8 @@ export class BloodComponent extends AggregateRoot<string> {
       props.componentType,
       props.bloodType,
       props.validityPeriod,
+      props.donationPurpose,
+      props.designatedRecipientId,
       ComponentStatus.IN_QUARANTINE,
     );
     component.addDomainEvent(
@@ -101,6 +108,8 @@ export class BloodComponent extends AggregateRoot<string> {
     componentType: ComponentType;
     bloodType: BloodType;
     validityPeriod: ValidityPeriod;
+    donationPurpose: DonationPurpose;
+    designatedRecipientId: string | null;
     status: ComponentStatus;
     isUnderReevaluation: boolean;
     reservation: Reservation | null;
@@ -113,6 +122,8 @@ export class BloodComponent extends AggregateRoot<string> {
       props.componentType,
       props.bloodType,
       props.validityPeriod,
+      props.donationPurpose,
+      props.designatedRecipientId,
       props.status,
     );
     component._isUnderReevaluation = props.isUnderReevaluation;
@@ -173,6 +184,11 @@ export class BloodComponent extends AggregateRoot<string> {
     if (this.validityPeriod.isExpiredAt(new Date())) {
       throw new DomainError(`Cannot reserve component ${this.id}: it has already expired.`);
     }
+    if (this.donationPurpose !== DonationPurpose.GENERAL && reservation.requestedBy !== this.designatedRecipientId) {
+      throw new DomainError(
+        `Cannot reserve an ${this.donationPurpose.toLowerCase()} component for a different recipient.`,
+      );
+    }
     this._reservation = reservation;
     this._status = ComponentStatus.RESERVED;
     this.addDomainEvent(
@@ -198,6 +214,11 @@ export class BloodComponent extends AggregateRoot<string> {
   /** Offers a surplus, close-to-expiry component to the Rede & Intercâmbio bounded context. */
   offerForExchange(): void {
     this.assertStatus(ComponentStatus.STORED, 'offer for exchange');
+    if (this.donationPurpose !== DonationPurpose.GENERAL) {
+      throw new DomainError(
+        `${this.donationPurpose.toLowerCase()} components can never be offered for exchange.`,
+      );
+    }
     this._status = ComponentStatus.OFFERED_FOR_EXCHANGE;
     this.addDomainEvent(
       new ComponentOfferedForExchangeEvent(

@@ -7,8 +7,9 @@ import { AboGroup, BloodType, RhFactor } from '../../src/modules/inventory/domai
 import { ValidityPeriod } from '../../src/modules/inventory/domain/value-objects/validity-period.vo';
 import { Reservation } from '../../src/modules/inventory/domain/value-objects/reservation.vo';
 import { DomainError } from '../../src/shared/domain/domain-error';
+import { DonationPurpose } from '../../src/shared/domain/donation-purpose.enum';
 
-function buildFreshComponent(): BloodComponent {
+function buildFreshComponent(donationPurpose: DonationPurpose = DonationPurpose.GENERAL, designatedRecipientId: string | null = null): BloodComponent {
   return BloodComponent.separate({
     id: 'component-1',
     tenantId: 'tenant-1',
@@ -16,6 +17,8 @@ function buildFreshComponent(): BloodComponent {
     componentType: ComponentType.PLATELETS,
     bloodType: BloodType.create(AboGroup.O, RhFactor.NEGATIVE),
     validityPeriod: ValidityPeriod.fromDays(new Date('2026-01-01'), 5),
+    donationPurpose,
+    designatedRecipientId,
   });
 }
 
@@ -103,5 +106,51 @@ describe('BloodComponent', () => {
 
     expect(component.isUnderReevaluation).toBe(true);
     expect(component.status).toBe(ComponentStatus.IN_QUARANTINE);
+  });
+
+  it('refuses to reserve an autologous component for a different recipient', () => {
+    const component = buildFreshComponent(DonationPurpose.AUTOLOGOUS, 'recipient-1');
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    const reservation = Reservation.emergency('hospital-1', 2);
+    expect(() => component.reserve(reservation)).toThrow(DomainError);
+  });
+
+  it('allows reserving an autologous component for its designated recipient', () => {
+    const component = buildFreshComponent(DonationPurpose.AUTOLOGOUS, 'recipient-1');
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    const reservation = Reservation.emergency('recipient-1', 2);
+    component.reserve(reservation);
+
+    expect(component.status).toBe(ComponentStatus.RESERVED);
+  });
+
+  it('refuses to offer an autologous component for exchange', () => {
+    const component = buildFreshComponent(DonationPurpose.AUTOLOGOUS, 'recipient-1');
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    expect(() => component.offerForExchange()).toThrow(DomainError);
+  });
+
+  it('refuses to offer a directed component for exchange', () => {
+    const component = buildFreshComponent(DonationPurpose.DIRECTED, 'recipient-1');
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    expect(() => component.offerForExchange()).toThrow(DomainError);
+  });
+
+  it('allows offering a general component for exchange', () => {
+    const component = buildFreshComponent(DonationPurpose.GENERAL);
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    component.offerForExchange();
+
+    expect(component.status).toBe(ComponentStatus.OFFERED_FOR_EXCHANGE);
   });
 });

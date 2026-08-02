@@ -10,6 +10,8 @@ export interface RegisterBloodBagInput {
   tenantId: string;
   donationId: string;
   collectedAt: Date;
+  donationPurpose: 'GENERAL' | 'AUTOLOGOUS' | 'DIRECTED';
+  designatedRecipientId?: string;
 }
 
 export interface RegisterBloodBagOutput {
@@ -38,6 +40,8 @@ export class RegisterBloodBagUseCase {
       tenantId: input.tenantId,
       donationId: input.donationId,
       collectedAt: input.collectedAt,
+      donationPurpose: input.donationPurpose as any,
+      designatedRecipientId: input.designatedRecipientId,
     });
 
     await this.transactionRunner.runInTransaction(async (scope) => {

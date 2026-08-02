@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BloodComponent } from '../../domain/entities/blood-component.entity';
 import { ComponentStatus } from '../../domain/enums/component-status.enum';
 import { ComponentType } from '../../domain/enums/component-type.enum';
+import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
 import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
 import { AboGroup, BloodType, RhFactor } from '../../domain/value-objects/blood-type.vo';
@@ -63,6 +64,8 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
         reservedBy: component.reservation?.requestedBy ?? null,
         reservationKind: component.reservation?.kind ?? null,
         reservationExpiresAt: component.reservation?.expiresAt ?? null,
+        donationPurpose: component.donationPurpose,
+        designatedRecipientId: component.designatedRecipientId,
       },
       update: {
         status: component.status,
@@ -71,6 +74,8 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
         reservedBy: component.reservation?.requestedBy ?? null,
         reservationKind: component.reservation?.kind ?? null,
         reservationExpiresAt: component.reservation?.expiresAt ?? null,
+        donationPurpose: component.donationPurpose,
+        designatedRecipientId: component.designatedRecipientId,
       },
     });
   }
@@ -96,6 +101,8 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
       componentType: row.componentType as ComponentType,
       bloodType,
       validityPeriod,
+      donationPurpose: row.donationPurpose as DonationPurpose,
+      designatedRecipientId: row.designatedRecipientId,
       status: row.status as ComponentStatus,
       isUnderReevaluation: row.isUnderReevaluation,
       reservation,

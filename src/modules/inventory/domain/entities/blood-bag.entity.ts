@@ -1,5 +1,6 @@
 import { AggregateRoot } from '../../../../shared/domain/aggregate-root.base';
 import { DomainError } from '../../../../shared/domain/domain-error';
+import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { BloodBagRegisteredEvent } from '../events/blood-bag.events';
 
 export enum BloodBagStatus {
@@ -28,6 +29,8 @@ export class BloodBag extends AggregateRoot<string> {
     public readonly tenantId: string,
     public readonly donationId: string,
     public readonly collectedAt: Date,
+    public readonly donationPurpose: DonationPurpose,
+    public readonly designatedRecipientId: string | null,
     status: BloodBagStatus,
   ) {
     super(id);
@@ -39,12 +42,16 @@ export class BloodBag extends AggregateRoot<string> {
     tenantId: string;
     donationId: string;
     collectedAt: Date;
+    donationPurpose: DonationPurpose;
+    designatedRecipientId?: string;
   }): BloodBag {
     const bloodBag = new BloodBag(
       props.id,
       props.tenantId,
       props.donationId,
       props.collectedAt,
+      props.donationPurpose,
+      props.designatedRecipientId ?? null,
       BloodBagStatus.PROCESSING,
     );
     bloodBag.addDomainEvent(
@@ -62,6 +69,8 @@ export class BloodBag extends AggregateRoot<string> {
     tenantId: string;
     donationId: string;
     collectedAt: Date;
+    donationPurpose: DonationPurpose;
+    designatedRecipientId: string | null;
     status: BloodBagStatus;
     componentIds: string[];
   }): BloodBag {
@@ -70,6 +79,8 @@ export class BloodBag extends AggregateRoot<string> {
       props.tenantId,
       props.donationId,
       props.collectedAt,
+      props.donationPurpose,
+      props.designatedRecipientId,
       props.status,
     );
     bloodBag._componentIds.push(...props.componentIds);

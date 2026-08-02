@@ -80,6 +80,8 @@ export class SeparateComponentUseCase {
           componentType: item.componentType,
           bloodType: BloodType.create(item.aboGroup, item.rhFactor, item.extendedPhenotype),
           validityPeriod,
+          donationPurpose: bloodBag.donationPurpose,
+          designatedRecipientId: bloodBag.designatedRecipientId,
         });
 
         bloodBag.registerDerivedComponent(component.id);

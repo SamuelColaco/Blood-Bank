@@ -1,8 +1,6 @@
 /**
  * Opaque handle representing a shared database transaction context.
  *
- * @deprecated Import from shared/domain directly. This re-export exists
- * only for backward compatibility during the shared-contracts migration.
  */
 export interface ITransactionScope {
     /** Unique identifier for this transaction scope, used for logging/debugging. */

@@ -25,6 +25,19 @@ enum EquipmentType {
   PLATELET_AGITATOR
 }
 
+enum ComponentType {
+  RED_BLOOD_CELLS
+  PLATELETS
+  PLASMA
+  CRYOPRECIPITATE
+}
+
+enum DonationPurpose {
+  GENERAL
+  AUTOLOGOUS
+  DIRECTED
+}
+
 model Tenant {
   id           String   @id @default(uuid())
   name         String
@@ -39,11 +52,13 @@ model Tenant {
 }
 
 model BloodBag {
-  id          String         @id @default(uuid())
-  tenantId    String         @map("tenant_id")
-  donationId  String         @map("donation_id")
-  collectedAt DateTime       @map("collected_at")
-  status      BloodBagStatus
+  id                    String          @id @default(uuid())
+  tenantId              String          @map("tenant_id")
+  donationId            String          @map("donation_id")
+  collectedAt           DateTime        @map("collected_at")
+  donationPurpose       DonationPurpose @map("donation_purpose")
+  designatedRecipientId String?         @map("designated_recipient_id")
+  status                BloodBagStatus
 
   tenant     Tenant           @relation(fields: [tenantId], references: [id])
   components BloodComponent[]
@@ -52,21 +67,23 @@ model BloodBag {
 }
 
 model BloodComponent {
-  id                   String    @id @default(uuid())
-  tenantId             String    @map("tenant_id")
-  bloodBagId           String    @map("blood_bag_id")
-  equipmentId          String?   @map("equipment_id")
-  componentType        String    @map("component_type") // RED_BLOOD_CELLS | PLATELETS | PLASMA | CRYOPRECIPITATE
-  aboGroup             String    @map("abo_group")
-  rhFactor             String    @map("rh_factor")
-  extendedPhenotype    String?   @map("extended_phenotype")
-  status               String // see ComponentStatus enum in domain layer
-  collectedAt          DateTime  @map("collected_at")
-  expiresAt            DateTime  @map("expires_at")
-  isUnderReevaluation  Boolean   @default(false) @map("is_under_reevaluation")
-  reservedBy           String?   @map("reserved_by")
-  reservationKind      String?   @map("reservation_kind") // ELECTIVE | EMERGENCY
-  reservationExpiresAt DateTime? @map("reservation_expires_at")
+  id                    String          @id @default(uuid())
+  tenantId              String          @map("tenant_id")
+  bloodBagId            String          @map("blood_bag_id")
+  equipmentId           String?         @map("equipment_id")
+  componentType         ComponentType   @map("component_type")
+  aboGroup              String          @map("abo_group")
+  rhFactor              String          @map("rh_factor")
+  extendedPhenotype     String?         @map("extended_phenotype")
+  status                String // see ComponentStatus enum in domain layer
+  collectedAt           DateTime        @map("collected_at")
+  expiresAt             DateTime        @map("expires_at")
+  isUnderReevaluation   Boolean         @default(false) @map("is_under_reevaluation")
+  reservedBy            String?         @map("reserved_by")
+  reservationKind       String?         @map("reservation_kind") // ELECTIVE | EMERGENCY
+  reservationExpiresAt  DateTime?       @map("reservation_expires_at")
+  donationPurpose       DonationPurpose @map("donation_purpose")
+  designatedRecipientId String?         @map("designated_recipient_id")
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
   // ON DELETE RESTRICT: a blood bag can never be deleted while it still
