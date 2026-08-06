@@ -1,11 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IDonationRepository } from '../../../domain/repositories/donation.repository';
+import { VitalSigns } from '../../../domain/value-objects/vital-signs.vo';
+import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IOutboxEventWriter } from '../../../../../shared/domain/ports/outbox-event-writer.port';
 import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import { DonationTokens } from '../../tokens';
 
 export interface RecordVitalSignsInput {
     donationId: string;
+    weightInKg: number;
+    hemoglobinInGdl: number;
+    bloodPressureSys: number;
+    bloodPressureDia: number;
 }
 
 export interface RecordVitalSignsOutput {
@@ -16,7 +22,9 @@ export interface RecordVitalSignsOutput {
  * UC-03: Record vital signs for a donation.
  *
  * Validates that the questionnaire has been completed before allowing
- * vital signs to be recorded.
+ * vital signs to be recorded. The clinical values are wrapped in the
+ * VitalSigns value object; the actual sex-dependent eligibility check
+ * happens at approval time (UC-04), not here.
  */
 @Injectable()
 export class RecordVitalSignsUseCase {
@@ -29,14 +37,21 @@ export class RecordVitalSignsUseCase {
     async execute(input: RecordVitalSignsInput): Promise<RecordVitalSignsOutput> {
         const donation = await this.donationRepository.findById(input.donationId);
         if (!donation) {
-            throw new Error(`Donation ${input.donationId} not found.`);
+            throw new DomainError(`Donation ${input.donationId} not found.`);
         }
 
         if (donation.questionnaireSnapshot === null) {
-            throw new Error(`Cannot record vital signs for donation ${input.donationId}: questionnaire not completed.`);
+            throw new DomainError(`Cannot record vital signs for donation ${input.donationId}: questionnaire not completed.`);
         }
 
-        donation.recordVitalSigns();
+        const vitalSigns = VitalSigns.create({
+            weightInKg: input.weightInKg,
+            hemoglobinInGdl: input.hemoglobinInGdl,
+            bloodPressureSys: input.bloodPressureSys,
+            bloodPressureDia: input.bloodPressureDia,
+        });
+
+        donation.recordVitalSigns(vitalSigns);
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.donationRepository.save(donation, scope);

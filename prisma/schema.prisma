@@ -161,15 +161,17 @@ model AuditLog {
 
 // Donation & Screening bounded context models
 model Donor {
-  id         String   @id @default(uuid())
-  tenantId   String   @map("tenant_id")
-  fullName   String   @map("full_name")
-  documentId String   @map("document_id")
-  birthDate  DateTime @map("birth_date")
-  gender     String // MALE | FEMALE
-  status     String // ACTIVE | INACTIVE
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  fullName        String    @map("full_name")
+  documentId      String    @map("document_id")
+  birthDate       DateTime  @map("birth_date")
+  gender          String // MALE | FEMALE
+  status          String // ACTIVE | INACTIVE
+  deferralEndDate DateTime? @map("deferral_end_date")
+  lastDonationAt  DateTime? @map("last_donation_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   tenant       Tenant                @relation(fields: [tenantId], references: [id])
   appointments DonationAppointment[]
@@ -222,6 +224,10 @@ model Donation {
   questionnaireSnapshot  Json?           @map("questionnaire_snapshot")
   vitalSignsRecorded     Boolean         @default(false) @map("vital_signs_recorded")
   apheresisSession       Json?           @map("apheresis_session")
+  weightInKg             Float?          @map("weight_in_kg")
+  hemoglobinInGdl        Float?          @map("hemoglobin_in_gdl")
+  bloodPressureSys       Int?            @map("blood_pressure_sys")
+  bloodPressureDia       Int?            @map("blood_pressure_dia")
   collectedAt            DateTime?       @map("collected_at")
   questionnaireVersionId String?         @map("questionnaire_version_id")
   createdAt              DateTime        @default(now()) @map("created_at")

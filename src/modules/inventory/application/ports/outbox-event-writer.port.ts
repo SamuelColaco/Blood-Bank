@@ -1,5 +1,5 @@
 import { DomainEvent } from '../../../../shared/domain/domain-event.base';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 
 /**
  * Port for persisting domain events to the transactional outbox.

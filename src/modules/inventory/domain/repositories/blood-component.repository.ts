@@ -1,5 +1,5 @@
 import { BloodComponent } from '../entities/blood-component.entity';
-import { ITransactionScope } from '../ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 
 /**
  * Port (interface) for persisting and retrieving BloodComponent

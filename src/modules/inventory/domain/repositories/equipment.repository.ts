@@ -1,5 +1,5 @@
 import { Equipment } from '../entities/equipment.entity';
-import { ITransactionScope } from '../ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 
 export interface IEquipmentRepository {
   findById(id: string): Promise<Equipment | null>;

@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IDonationRepository } from '../../../domain/repositories/donation.repository';
+import { IDonorRepository } from '../../../domain/repositories/donor.repository';
+import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IOutboxEventWriter } from '../../../../../shared/domain/ports/outbox-event-writer.port';
 import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import { DonationTokens } from '../../tokens';
@@ -24,6 +26,7 @@ export interface ApproveDonationOutput {
 export class ApproveDonationUseCase {
     constructor(
         @Inject(DonationTokens.DONATION_REPOSITORY) private readonly donationRepository: IDonationRepository,
+        @Inject(DonationTokens.DONOR_REPOSITORY) private readonly donorRepository: IDonorRepository,
         @Inject(DonationTokens.OUTBOX_EVENT_WRITER) private readonly outboxEventWriter: IOutboxEventWriter,
         @Inject(DonationTokens.TRANSACTION_RUNNER) private readonly transactionRunner: ITransactionRunner,
     ) { }
@@ -31,18 +34,18 @@ export class ApproveDonationUseCase {
     async execute(input: ApproveDonationInput): Promise<ApproveDonationOutput> {
         const donation = await this.donationRepository.findById(input.donationId);
         if (!donation) {
-            throw new Error(`Donation ${input.donationId} not found.`);
+            throw new DomainError(`Donation ${input.donationId} not found.`);
         }
 
-        if (donation.questionnaireSnapshot === null) {
-            throw new Error(`Cannot approve donation ${input.donationId}: questionnaire not completed.`);
+        const donor = await this.donorRepository.findById(donation.donorId);
+        if (!donor) {
+            throw new DomainError(`Donor ${donation.donorId} not found.`);
         }
 
-        if (!donation.vitalSignsRecorded) {
-            throw new Error(`Cannot approve donation ${input.donationId}: vital signs not recorded.`);
-        }
-
-        donation.approve();
+        // The aggregate enforces UC-03 (vital signs within range) and UC-04
+        // (questionnaire + vital signs complete) internally, using the
+        // donor's sex for the sex-dependent acceptable range check.
+        donation.approve(donor.genderValue);
 
         await this.transactionRunner.runInTransaction(async (scope) => {
             await this.donationRepository.save(donation, scope);

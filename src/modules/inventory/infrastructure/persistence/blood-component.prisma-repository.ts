@@ -4,7 +4,7 @@ import { ComponentStatus } from '../../domain/enums/component-status.enum';
 import { ComponentType } from '../../domain/enums/component-type.enum';
 import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { AboGroup, BloodType, RhFactor } from '../../domain/value-objects/blood-type.vo';
 import { Reservation, ReservationKind } from '../../domain/value-objects/reservation.vo';
 import { ValidityPeriod } from '../../domain/value-objects/validity-period.vo';

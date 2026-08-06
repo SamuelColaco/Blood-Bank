@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { BloodBag } from '../../../domain/entities/blood-bag.entity';
 import { IBloodBagRepository } from '../../../domain/repositories/blood-bag.repository';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import { BLOOD_BAG_REPOSITORY, OUTBOX_EVENT_WRITER, TRANSACTION_RUNNER } from '../../tokens';
 
 export interface RegisterBloodBagInput {

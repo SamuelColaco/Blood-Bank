@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Donation } from '../../../domain/entities/donation.entity';
 import { QuestionnaireAnswer, QuestionnaireResponseSnapshot } from '../../../domain/entities/donation.entity';
 import { IDonationRepository } from '../../../domain/repositories/donation.repository';
+import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IOutboxEventWriter } from '../../../../../shared/domain/ports/outbox-event-writer.port';
 import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import { DonationTokens } from '../../tokens';
@@ -33,7 +34,7 @@ export class RecordQuestionnaireResponseUseCase {
     async execute(input: RecordQuestionnaireResponseInput): Promise<RecordQuestionnaireResponseOutput> {
         const donation = await this.donationRepository.findById(input.donationId);
         if (!donation) {
-            throw new Error(`Donation ${input.donationId} not found.`);
+            throw new DomainError(`Donation ${input.donationId} not found.`);
         }
 
         const snapshot: QuestionnaireResponseSnapshot = {

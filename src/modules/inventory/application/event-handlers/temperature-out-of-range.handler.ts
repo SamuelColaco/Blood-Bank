@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TemperatureOutOfRangeDetectedEvent } from '../../domain/events/equipment.events';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { BLOOD_COMPONENT_REPOSITORY } from '../tokens';
 
 /**

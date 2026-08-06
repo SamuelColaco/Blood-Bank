@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { Prisma } from '@prisma/client';
-import { ITransactionRunner } from '../../application/ports/transaction-runner.port';
-import { ITransactionScope } from '../../application/ports/transaction-scope.port';
+import { ITransactionRunner } from '../../../../shared/domain/transaction-runner.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { randomUUID } from 'crypto';
 
 /**

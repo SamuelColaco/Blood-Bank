@@ -12,6 +12,7 @@ import {
     QuestionnaireResponseSubmittedEvent,
     VitalSignsRecordedEvent,
 } from '../events/donation.events';
+import { VitalSigns } from '../value-objects/vital-signs.vo';
 
 /**
  * Value object representing a snapshot of the questionnaire at the time
@@ -48,6 +49,7 @@ export interface ApheresisSession {
  */
 export class Donation extends AggregateRoot<string> {
     private _questionnaireSnapshot: QuestionnaireResponseSnapshot | null = null;
+    private _vitalSigns: VitalSigns | null = null;
     private _vitalSignsRecorded = false;
     private _apheresisSession: ApheresisSession | null = null;
     private _collectedAt: Date | null = null;
@@ -93,6 +95,7 @@ export class Donation extends AggregateRoot<string> {
         donationPurpose: DonationPurpose;
         designatedRecipientId: string | null;
         questionnaireSnapshot: QuestionnaireResponseSnapshot | null;
+        vitalSigns: VitalSigns | null;
         vitalSignsRecorded: boolean;
         apheresisSession: ApheresisSession | null;
         collectedAt: Date | null;
@@ -107,6 +110,7 @@ export class Donation extends AggregateRoot<string> {
             props.designatedRecipientId,
         );
         donation._questionnaireSnapshot = props.questionnaireSnapshot;
+        donation._vitalSigns = props.vitalSigns;
         donation._vitalSignsRecorded = props.vitalSignsRecorded;
         donation._apheresisSession = props.apheresisSession;
         donation._collectedAt = props.collectedAt;
@@ -115,6 +119,10 @@ export class Donation extends AggregateRoot<string> {
 
     get questionnaireSnapshot(): QuestionnaireResponseSnapshot | null {
         return this._questionnaireSnapshot;
+    }
+
+    get vitalSigns(): VitalSigns | null {
+        return this._vitalSigns;
     }
 
     get vitalSignsRecorded(): boolean {
@@ -138,22 +146,34 @@ export class Donation extends AggregateRoot<string> {
         this.addDomainEvent(new QuestionnaireResponseSubmittedEvent(this.id, this.id, this.donorId, this.tenantId));
     }
 
-    /** Records that vital signs have been checked. */
-    recordVitalSigns(): void {
+    /** Records the donor's clinical vital signs (UC-03). */
+    recordVitalSigns(vitalSigns: VitalSigns): void {
         if (this._vitalSignsRecorded) {
             throw new DomainError(`Vital signs for donation ${this.id} have already been recorded.`);
         }
+        this._vitalSigns = vitalSigns;
         this._vitalSignsRecorded = true;
         this.addDomainEvent(new VitalSignsRecordedEvent(this.id, this.id, this.donorId));
     }
 
-    /** Approves the donation after questionnaire and vital signs are complete. */
-    approve(): void {
+    /**
+     * Approves the donation after questionnaire and vital signs are complete.
+     *
+     * Receives the donor's sex so the vital signs can be checked against the
+     * sex-specific acceptable range (UC-03): values outside the range block
+     * eligibility automatically.
+     */
+    approve(gender: 'MALE' | 'FEMALE'): void {
         if (this._questionnaireSnapshot === null) {
             throw new DomainError(`Cannot approve donation ${this.id}: questionnaire not recorded.`);
         }
-        if (!this._vitalSignsRecorded) {
+        if (!this._vitalSignsRecorded || this._vitalSigns === null) {
             throw new DomainError(`Cannot approve donation ${this.id}: vital signs not recorded.`);
+        }
+        if (!this._vitalSigns.isWithinAcceptableRange(gender)) {
+            throw new DomainError(
+                `Cannot approve donation ${this.id}: vital signs outside acceptable range for donor sex (UC-03).`,
+            );
         }
         this.addDomainEvent(
             new DonationApprovedEvent(this.id, this.id, this.donorId, this.donationType, this.donationPurpose, this.designatedRecipientId),

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Equipment } from '../../domain/entities/equipment.entity';
 import { EquipmentType } from '../../domain/enums/equipment-type.enum';
 import { IEquipmentRepository } from '../../domain/repositories/equipment.repository';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { PrismaService } from './prisma.service';
 import { PrismaTransactionRunner } from './prisma-transaction-runner';
 

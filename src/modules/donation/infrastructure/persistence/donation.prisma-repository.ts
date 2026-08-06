@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Donation } from '../../domain/entities/donation.entity';
 import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IDonationRepository } from '../../domain/repositories/donation.repository';
+import { VitalSigns } from '../../domain/value-objects/vital-signs.vo';
 import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { DonationPrismaService } from './donation-prisma.service';
 import { DonationPrismaTransactionRunner } from './transaction-runner';
@@ -25,6 +26,7 @@ export class DonationPrismaRepository implements IDonationRepository {
             donationPurpose: row.donationPurpose as DonationPurpose,
             designatedRecipientId: row.designatedRecipientId,
             questionnaireSnapshot: row.questionnaireSnapshot as any,
+            vitalSigns: this.toVitalSigns(row),
             vitalSignsRecorded: row.vitalSignsRecorded,
             apheresisSession: row.apheresisSession as any,
             collectedAt: row.collectedAt,
@@ -45,11 +47,29 @@ export class DonationPrismaRepository implements IDonationRepository {
                 donationPurpose: row.donationPurpose as DonationPurpose,
                 designatedRecipientId: row.designatedRecipientId,
                 questionnaireSnapshot: row.questionnaireSnapshot as any,
+                vitalSigns: this.toVitalSigns(row),
                 vitalSignsRecorded: row.vitalSignsRecorded,
                 apheresisSession: row.apheresisSession as any,
                 collectedAt: row.collectedAt,
             }),
         );
+    }
+
+    private toVitalSigns(row: any): VitalSigns | null {
+        if (
+            row.weightInKg === null ||
+            row.hemoglobinInGdl === null ||
+            row.bloodPressureSys === null ||
+            row.bloodPressureDia === null
+        ) {
+            return null;
+        }
+        return VitalSigns.restore({
+            weightInKg: row.weightInKg,
+            hemoglobinInGdl: row.hemoglobinInGdl,
+            bloodPressureSys: row.bloodPressureSys,
+            bloodPressureDia: row.bloodPressureDia,
+        });
     }
 
     async save(donation: Donation, scope?: ITransactionScope): Promise<void> {
@@ -69,12 +89,20 @@ export class DonationPrismaRepository implements IDonationRepository {
                 designatedRecipientId: donation.designatedRecipientId,
                 questionnaireSnapshot: donation.questionnaireSnapshot as any,
                 vitalSignsRecorded: donation.vitalSignsRecorded,
+                weightInKg: donation.vitalSigns?.weightInKg ?? null,
+                hemoglobinInGdl: donation.vitalSigns?.hemoglobinInGdl ?? null,
+                bloodPressureSys: donation.vitalSigns?.bloodPressureSys ?? null,
+                bloodPressureDia: donation.vitalSigns?.bloodPressureDia ?? null,
                 apheresisSession: donation.apheresisSession as any,
                 collectedAt: donation.collectedAt,
             },
             update: {
                 questionnaireSnapshot: donation.questionnaireSnapshot as any,
                 vitalSignsRecorded: donation.vitalSignsRecorded,
+                weightInKg: donation.vitalSigns?.weightInKg ?? null,
+                hemoglobinInGdl: donation.vitalSigns?.hemoglobinInGdl ?? null,
+                bloodPressureSys: donation.vitalSigns?.bloodPressureSys ?? null,
+                bloodPressureDia: donation.vitalSigns?.bloodPressureDia ?? null,
                 apheresisSession: donation.apheresisSession as any,
                 collectedAt: donation.collectedAt,
             },

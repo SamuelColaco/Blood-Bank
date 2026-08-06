@@ -9,6 +9,7 @@ import { StartCollectionUseCase } from './application/use-cases/start-collection
 import { CompleteCollectionUseCase } from './application/use-cases/complete-collection/complete-collection.use-case';
 import { PublishQuestionnaireVersionUseCase } from './application/use-cases/publish-questionnaire-version/publish-questionnaire-version.use-case';
 import { SyncOfflineDataUseCase } from './application/use-cases/sync-offline-data/sync-offline-data.use-case';
+import { ExclusionCriteriaTriggeredHandler } from './application/event-handlers/exclusion-criteria-triggered.handler';
 
 /**
  * Donation & Screening bounded context module.
@@ -31,6 +32,7 @@ import { SyncOfflineDataUseCase } from './application/use-cases/sync-offline-dat
         CompleteCollectionUseCase,
         PublishQuestionnaireVersionUseCase,
         SyncOfflineDataUseCase,
+        ExclusionCriteriaTriggeredHandler,
     ],
     exports: [
         RegisterDonorUseCase,

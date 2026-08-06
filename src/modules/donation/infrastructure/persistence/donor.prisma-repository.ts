@@ -23,6 +23,8 @@ export class DonorPrismaRepository implements IDonorRepository {
             birthDate: row.birthDate,
             gender: row.gender as any,
             status: row.status as any,
+            deferralEndDate: row.deferralEndDate,
+            lastDonationAt: row.lastDonationAt,
         });
     }
 
@@ -37,6 +39,8 @@ export class DonorPrismaRepository implements IDonorRepository {
             birthDate: row.birthDate,
             gender: row.gender as any,
             status: row.status as any,
+            deferralEndDate: row.deferralEndDate,
+            lastDonationAt: row.lastDonationAt,
         });
     }
 
@@ -55,6 +59,8 @@ export class DonorPrismaRepository implements IDonorRepository {
                 birthDate: donor.birthDate,
                 gender: donor.gender,
                 status: donor.status,
+                deferralEndDate: donor.deferralEndDate,
+                lastDonationAt: donor.lastDonationAt,
             },
             update: {
                 fullName: donor.fullName,
@@ -62,6 +68,8 @@ export class DonorPrismaRepository implements IDonorRepository {
                 birthDate: donor.birthDate,
                 gender: donor.gender,
                 status: donor.status,
+                deferralEndDate: donor.deferralEndDate,
+                lastDonationAt: donor.lastDonationAt,
             },
         });
     }

@@ -9,7 +9,7 @@ import { ValidityCalculatorService } from '../../../domain/services/validity-cal
 import { IBloodBagRepository } from '../../../domain/repositories/blood-bag.repository';
 import { IBloodComponentRepository } from '../../../domain/repositories/blood-component.repository';
 import { IOutboxEventWriter } from '../../ports/outbox-event-writer.port';
-import { ITransactionRunner } from '../../ports/transaction-runner.port';
+import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import {
   BLOOD_BAG_REPOSITORY,
   BLOOD_COMPONENT_REPOSITORY,

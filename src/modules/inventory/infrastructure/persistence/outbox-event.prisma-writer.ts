@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DomainEvent } from '../../../../shared/domain/domain-event.base';
 import { IOutboxEventWriter } from '../../application/ports/outbox-event-writer.port';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { PrismaService } from './prisma.service';
 import { PrismaTransactionRunner } from './prisma-transaction-runner';
 

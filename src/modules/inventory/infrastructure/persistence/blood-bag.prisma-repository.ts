@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BloodBag, BloodBagStatus } from '../../domain/entities/blood-bag.entity';
 import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IBloodBagRepository } from '../../domain/repositories/blood-bag.repository';
-import { ITransactionScope } from '../../domain/ports/transaction-scope.port';
+import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
 import { PrismaService } from './prisma.service';
 import { PrismaTransactionRunner } from './prisma-transaction-runner';
 

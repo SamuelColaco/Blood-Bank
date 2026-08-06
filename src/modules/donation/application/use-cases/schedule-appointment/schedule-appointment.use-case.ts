@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DonationAppointment } from '../../../domain/entities/donation-appointment.entity';
 import { IDonationAppointmentRepository } from '../../../domain/repositories/donation-appointment.repository';
 import { IDonorRepository } from '../../../domain/repositories/donor.repository';
+import { DomainError } from '../../../../../shared/domain/domain-error';
 import { IOutboxEventWriter } from '../../../../../shared/domain/ports/outbox-event-writer.port';
 import { ITransactionRunner } from '../../../../../shared/domain/transaction-runner.port';
 import { DonationTokens } from '../../tokens';
@@ -35,11 +36,15 @@ export class ScheduleAppointmentUseCase {
     async execute(input: ScheduleAppointmentInput): Promise<ScheduleAppointmentOutput> {
         const donor = await this.donorRepository.findById(input.donorId);
         if (!donor) {
-            throw new Error(`Donor ${input.donorId} not found.`);
+            throw new DomainError(`Donor ${input.donorId} not found.`);
         }
 
-        if (donor.status !== 'ACTIVE') {
-            throw new Error(`Cannot schedule appointment for inactive donor ${input.donorId}.`);
+        const eligibility = donor.isEligibleToDonate();
+        if (!eligibility.eligible) {
+            throw new DomainError(
+                `Cannot schedule appointment for donor ${input.donorId}: ${eligibility.reason}` +
+                (eligibility.eligibleAt ? ` Eligible from ${eligibility.eligibleAt.toISOString()}.` : ''),
+            );
         }
 
         const appointment = DonationAppointment.schedule({
