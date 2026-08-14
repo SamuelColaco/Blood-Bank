@@ -3,7 +3,7 @@ import { BloodComponent } from '../../src/modules/inventory/domain/entities/bloo
 import { ComponentType } from '../../src/modules/inventory/domain/enums/component-type.enum';
 import { ComponentStatus } from '../../src/modules/inventory/domain/enums/component-status.enum';
 import { DiscardReason } from '../../src/modules/inventory/domain/enums/discard-reason.enum';
-import { AboGroup, BloodType, RhFactor } from '../../src/modules/inventory/domain/value-objects/blood-type.vo';
+import { AboGroup, BloodType, RhFactor } from '../../src/shared/domain/blood-type.vo';
 import { ValidityPeriod } from '../../src/modules/inventory/domain/value-objects/validity-period.vo';
 import { Reservation } from '../../src/modules/inventory/domain/value-objects/reservation.vo';
 import { DomainError } from '../../src/shared/domain/domain-error';
@@ -71,9 +71,34 @@ describe('BloodComponent', () => {
     component.releaseFromQuarantine();
     component.store('equipment-1');
     component.reserve(Reservation.emergency('hospital-1', 2));
-    component.allocate();
+    component.allocate('xmatch-1');
 
     expect(component.status).toBe(ComponentStatus.ALLOCATED);
+  });
+
+  it('raises ComponentAllocated with the crossmatch reference', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+    component.reserve(Reservation.emergency('hospital-1', 2));
+    component.allocate('xmatch-ref-42');
+
+    const event = component
+      .pullDomainEvents()
+      .find((e) => e.eventName === 'ComponentAllocated') as unknown as {
+        crossmatchReference: string;
+      };
+    expect(event.crossmatchReference).toBe('xmatch-ref-42');
+  });
+
+  it('refuses to allocate without a crossmatch reference', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+    component.reserve(Reservation.emergency('hospital-1', 2));
+
+    expect(() => component.allocate('   ')).toThrow(DomainError);
+    expect(component.status).toBe(ComponentStatus.RESERVED);
   });
 
   it('refuses to reserve an expired component even though its status is STORED', () => {
@@ -152,5 +177,60 @@ describe('BloodComponent', () => {
     component.offerForExchange();
 
     expect(component.status).toBe(ComponentStatus.OFFERED_FOR_EXCHANGE);
+  });
+
+  it('applies irradiation only to a STORED component and raises its event', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    component.applyIrradiation();
+
+    expect(component.specialProcessing.isIrradiated).toBe(true);
+    expect(component.specialProcessing.isLeukoreduced).toBe(false);
+    expect(
+      component.pullDomainEvents().some((e) => e.eventName === 'ComponentIrradiated'),
+    ).toBe(true);
+  });
+
+  it('refuses to irradiate a component more than once', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+    component.applyIrradiation();
+
+    expect(() => component.applyIrradiation()).toThrow(DomainError);
+  });
+
+  it('refuses to apply irradiation to a non-STORED component', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+    component.reserve(Reservation.emergency('hospital-1', 2));
+
+    expect(() => component.applyIrradiation()).toThrow(DomainError);
+  });
+
+  it('applies leukoreduction only to a STORED component and raises its event', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+
+    component.applyLeukoreduction();
+
+    expect(component.specialProcessing.isLeukoreduced).toBe(true);
+    expect(component.specialProcessing.isIrradiated).toBe(false);
+    expect(
+      component.pullDomainEvents().some((e) => e.eventName === 'ComponentLeukoreduced'),
+    ).toBe(true);
+  });
+
+  it('refuses to apply leukoreduction to an already leukoreduced component', () => {
+    const component = buildFreshComponent();
+    component.releaseFromQuarantine();
+    component.store('equipment-1');
+    component.applyLeukoreduction();
+
+    expect(() => component.applyLeukoreduction()).toThrow(DomainError);
   });
 });

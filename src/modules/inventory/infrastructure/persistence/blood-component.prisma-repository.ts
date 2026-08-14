@@ -5,8 +5,9 @@ import { ComponentType } from '../../domain/enums/component-type.enum';
 import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum';
 import { IBloodComponentRepository } from '../../domain/repositories/blood-component.repository';
 import { ITransactionScope } from '../../../../shared/domain/transaction-scope.port';
-import { AboGroup, BloodType, RhFactor } from '../../domain/value-objects/blood-type.vo';
+import { AboGroup, BloodType, RhFactor } from '../../../../shared/domain/blood-type.vo';
 import { Reservation, ReservationKind } from '../../domain/value-objects/reservation.vo';
+import { SpecialProcessing } from '../../../../shared/domain/special-processing.vo';
 import { ValidityPeriod } from '../../domain/value-objects/validity-period.vo';
 import { PrismaService } from './prisma.service';
 import { PrismaTransactionRunner } from './prisma-transaction-runner';
@@ -66,6 +67,8 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
         reservationExpiresAt: component.reservation?.expiresAt ?? null,
         donationPurpose: component.donationPurpose,
         designatedRecipientId: component.designatedRecipientId,
+        isIrradiated: component.specialProcessing.isIrradiated,
+        isLeukoreduced: component.specialProcessing.isLeukoreduced,
       },
       update: {
         status: component.status,
@@ -76,6 +79,8 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
         reservationExpiresAt: component.reservation?.expiresAt ?? null,
         donationPurpose: component.donationPurpose,
         designatedRecipientId: component.designatedRecipientId,
+        isIrradiated: component.specialProcessing.isIrradiated,
+        isLeukoreduced: component.specialProcessing.isLeukoreduced,
       },
     });
   }
@@ -107,6 +112,7 @@ export class BloodComponentPrismaRepository implements IBloodComponentRepository
       isUnderReevaluation: row.isUnderReevaluation,
       reservation,
       equipmentId: row.equipmentId,
+      specialProcessing: SpecialProcessing.create(row.isIrradiated, row.isLeukoreduced),
     });
   }
 }

@@ -56,6 +56,9 @@ model Tenant {
   donationAppointments          DonationAppointment[]
   clinicalQuestionnaireVersions ClinicalQuestionnaireVersion[]
   donations                     Donation[]
+  hospitals                     Hospital[]
+  hospitalRequests              HospitalRequest[]
+  transportContainers           TransportContainer[]
 
   @@map("tenants")
 }
@@ -93,6 +96,8 @@ model BloodComponent {
   reservationExpiresAt  DateTime?       @map("reservation_expires_at")
   donationPurpose       DonationPurpose @map("donation_purpose")
   designatedRecipientId String?         @map("designated_recipient_id")
+  isIrradiated          Boolean         @default(false) @map("is_irradiated")
+  isLeukoreduced        Boolean         @default(false) @map("is_leukoreduced")
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
   // ON DELETE RESTRICT: a blood bag can never be deleted while it still
@@ -239,4 +244,75 @@ model Donation {
   questionnaire ClinicalQuestionnaireVersion? @relation(fields: [questionnaireVersionId], references: [id])
 
   @@map("donations")
+}
+
+// Distribuição bounded context models (Phase 3). See docs/SDD-FASE3.md.
+
+model Hospital {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  name     String
+
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  requests HospitalRequest[]
+
+  @@map("hospitals")
+}
+
+model HospitalRequest {
+  id                         String   @id @default(uuid())
+  tenantId                   String   @map("tenant_id")
+  hospitalId                 String   @map("hospital_id")
+  requestedAboGroup          String   @map("requested_abo_group")
+  requestedRhFactor          String   @map("requested_rh_factor")
+  requestedExtendedPhenotype String?  @map("requested_extended_phenotype")
+  requiredIsIrradiated       Boolean  @default(false) @map("required_is_irradiated")
+  requiredIsLeukoreduced     Boolean  @default(false) @map("required_is_leukoreduced")
+  urgency                    String // ELECTIVE | EMERGENCY
+  status                     String // see HospitalRequestStatus enum in domain layer
+  linkedComponentId          String?  @map("linked_component_id")
+  shortlist                  Json     @default("[]")
+  crossmatchReference        String?  @map("crossmatch_reference")
+  crossmatchConfirmedBy      String?  @map("crossmatch_confirmed_by")
+  crossmatchConfirmedRole    String?  @map("crossmatch_confirmed_role")
+  awaitingPickConfirmation   Boolean  @default(false) @map("awaiting_pick_confirmation")
+  overrideLog                Json     @default("[]") @map("override_log")
+  rejectionReason            String?  @map("rejection_reason")
+  cancellationReason         String?  @map("cancellation_reason")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant               @relation(fields: [tenantId], references: [id])
+  hospital   Hospital             @relation(fields: [hospitalId], references: [id])
+  containers TransportContainer[]
+
+  @@map("hospital_requests")
+}
+
+model TransportContainer {
+  id                String @id @default(uuid())
+  tenantId          String @map("tenant_id")
+  hospitalRequestId String @map("hospital_request_id")
+  minTemperature    Float  @map("min_temperature")
+  maxTemperature    Float  @map("max_temperature")
+
+  tenant              Tenant                        @relation(fields: [tenantId], references: [id])
+  request             HospitalRequest               @relation(fields: [hospitalRequestId], references: [id])
+  temperatureReadings TransportTemperatureReading[]
+
+  @@map("transport_containers")
+}
+
+// Mirrors TemperatureReading, but for a TransportContainer under way -
+// readings are stored separately so a sensor write never touches the
+// aggregate (same reasoning as Fase 1: SDD Fase 3, section 4.2).
+model TransportTemperatureReading {
+  id          String   @id @default(uuid())
+  containerId String   @map("container_id")
+  value       Float
+  recordedAt  DateTime @default(now()) @map("recorded_at")
+
+  container TransportContainer @relation(fields: [containerId], references: [id])
+
+  @@map("transport_temperature_readings")
 }

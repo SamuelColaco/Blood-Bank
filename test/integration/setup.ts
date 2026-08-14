@@ -25,7 +25,11 @@ afterAll(async () => {
 
 beforeEach(async () => {
     // Clean tables in reverse dependency order to avoid FK violations.
+    await prisma.transportTemperatureReading.deleteMany();
+    await prisma.transportContainer.deleteMany();
     await prisma.outboxEvent.deleteMany();
+    await prisma.hospitalRequest.deleteMany();
+    await prisma.hospital.deleteMany();
     await prisma.bloodComponent.deleteMany();
     await prisma.bloodBag.deleteMany();
     await prisma.equipment.deleteMany();

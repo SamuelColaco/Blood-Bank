@@ -4,13 +4,16 @@ import { DonationPurpose } from '../../../../shared/domain/donation-purpose.enum
 import { ComponentStatus } from '../enums/component-status.enum';
 import { ComponentType } from '../enums/component-type.enum';
 import { DiscardReason } from '../enums/discard-reason.enum';
-import { BloodType } from '../value-objects/blood-type.vo';
+import { BloodType } from '../../../../shared/domain/blood-type.vo';
+import { SpecialProcessing } from '../../../../shared/domain/special-processing.vo';
 import { ValidityPeriod } from '../value-objects/validity-period.vo';
 import { Reservation } from '../value-objects/reservation.vo';
 import {
   ComponentAllocatedEvent,
   ComponentDiscardedEvent,
   ComponentExpiredEvent,
+  ComponentIrradiatedEvent,
+  ComponentLeukoreducedEvent,
   ComponentOfferedForExchangeEvent,
   ComponentReservedEvent,
   ComponentSeparatedEvent,
@@ -41,12 +44,18 @@ import {
  * Note: there is deliberately no "conditionally released" status. Any
  * exception to standard quarantine release is out of scope by product
  * decision - see docs/fase-1.md, "Escopo fechado".
+ *
+ * Physical processing (irradiation, leukoreduction) is applied while the
+ * component is STORED, before it is reserved for a request - a request
+ * only selects a component that already carries the required processing.
+ * See SDD Fase 3, section 3.2.
  */
 export class BloodComponent extends AggregateRoot<string> {
   private _status: ComponentStatus;
   private _isUnderReevaluation = false;
   private _reservation: Reservation | null = null;
   private _equipmentId: string | null = null;
+  private _specialProcessing: SpecialProcessing;
 
   private constructor(
     id: string,
@@ -58,9 +67,11 @@ export class BloodComponent extends AggregateRoot<string> {
     public readonly donationPurpose: DonationPurpose,
     public readonly designatedRecipientId: string | null,
     status: ComponentStatus,
+    specialProcessing: SpecialProcessing,
   ) {
     super(id);
     this._status = status;
+    this._specialProcessing = specialProcessing;
   }
 
   /**
@@ -88,6 +99,7 @@ export class BloodComponent extends AggregateRoot<string> {
       props.donationPurpose,
       props.designatedRecipientId,
       ComponentStatus.IN_QUARANTINE,
+      SpecialProcessing.none(),
     );
     component.addDomainEvent(
       new ComponentSeparatedEvent(component.id, component.bloodBagId, component.componentType),
@@ -114,6 +126,7 @@ export class BloodComponent extends AggregateRoot<string> {
     isUnderReevaluation: boolean;
     reservation: Reservation | null;
     equipmentId: string | null;
+    specialProcessing: SpecialProcessing;
   }): BloodComponent {
     const component = new BloodComponent(
       props.id,
@@ -125,6 +138,7 @@ export class BloodComponent extends AggregateRoot<string> {
       props.donationPurpose,
       props.designatedRecipientId,
       props.status,
+      props.specialProcessing,
     );
     component._isUnderReevaluation = props.isUnderReevaluation;
     component._reservation = props.reservation;
@@ -146,6 +160,10 @@ export class BloodComponent extends AggregateRoot<string> {
 
   get equipmentId(): string | null {
     return this._equipmentId;
+  }
+
+  get specialProcessing(): SpecialProcessing {
+    return this._specialProcessing;
   }
 
   /**
@@ -205,10 +223,40 @@ export class BloodComponent extends AggregateRoot<string> {
   }
 
   /** Confirms the component was actually delivered/consumed by the requesting hospital. */
-  allocate(): void {
+  allocate(crossmatchReference: string): void {
     this.assertStatus(ComponentStatus.RESERVED, 'allocate');
+    if (!crossmatchReference || crossmatchReference.trim().length === 0) {
+      throw new DomainError('Cannot allocate without a confirmed crossmatch reference.');
+    }
     this._status = ComponentStatus.ALLOCATED;
-    this.addDomainEvent(new ComponentAllocatedEvent(this.id));
+    this.addDomainEvent(new ComponentAllocatedEvent(this.id, crossmatchReference));
+  }
+
+  /**
+   * Applies physical irradiation to the component. Only callable while
+   * STORED - a component can never be processed after it has been reserved
+   * or allocated for a request. See SDD Fase 3, section 3.2.
+   */
+  applyIrradiation(): void {
+    this.assertStatus(ComponentStatus.STORED, 'apply irradiation');
+    if (this._specialProcessing.isIrradiated) {
+      throw new DomainError(`Component ${this.id} has already been irradiated.`);
+    }
+    this._specialProcessing = this._specialProcessing.copyWithIrradiated();
+    this.addDomainEvent(new ComponentIrradiatedEvent(this.id));
+  }
+
+  /**
+   * Applies physical leukoreduction to the component. Only callable while
+   * STORED - see applyIrradiation() for the same invariant.
+   */
+  applyLeukoreduction(): void {
+    this.assertStatus(ComponentStatus.STORED, 'apply leukoreduction');
+    if (this._specialProcessing.isLeukoreduced) {
+      throw new DomainError(`Component ${this.id} has already been leukoreduced.`);
+    }
+    this._specialProcessing = this._specialProcessing.copyWithLeukoreduced();
+    this.addDomainEvent(new ComponentLeukoreducedEvent(this.id));
   }
 
   /** Offers a surplus, close-to-expiry component to the Rede & Intercâmbio bounded context. */

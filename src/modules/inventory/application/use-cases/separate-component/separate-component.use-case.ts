@@ -4,7 +4,7 @@ import { DomainError } from '../../../../../shared/domain/domain-error';
 import { DomainEvent } from '../../../../../shared/domain/domain-event.base';
 import { BloodComponent } from '../../../domain/entities/blood-component.entity';
 import { ComponentType } from '../../../domain/enums/component-type.enum';
-import { AboGroup, BloodType, RhFactor } from '../../../domain/value-objects/blood-type.vo';
+import { AboGroup, BloodType, RhFactor } from '../../../../../shared/domain/blood-type.vo';
 import { ValidityCalculatorService } from '../../../domain/services/validity-calculator.service';
 import { IBloodBagRepository } from '../../../domain/repositories/blood-bag.repository';
 import { IBloodComponentRepository } from '../../../domain/repositories/blood-component.repository';

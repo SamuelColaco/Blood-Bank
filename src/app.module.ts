@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { InventoryModule } from './modules/inventory/infrastructure/inventory.module';
+import { DistributionModule } from './modules/distribution/infrastructure/distribution.module';
 import { DonationModule } from './modules/donation/donation.module';
 
 /**
@@ -9,6 +10,6 @@ import { DonationModule } from './modules/donation/donation.module';
  * (see docs/roadmap.md).
  */
 @Module({
-  imports: [InventoryModule, DonationModule],
+  imports: [InventoryModule, DonationModule, DistributionModule],
 })
 export class AppModule { }

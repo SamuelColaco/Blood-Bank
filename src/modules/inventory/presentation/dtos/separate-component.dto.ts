@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ComponentType } from '../../domain/enums/component-type.enum';
-import { AboGroup, RhFactor } from '../../domain/value-objects/blood-type.vo';
+import { AboGroup, RhFactor } from '../../../../shared/domain/blood-type.vo';
 
 const componentToSeparateSchema = z.object({
   componentType: z.nativeEnum(ComponentType),

@@ -5,7 +5,7 @@ import { PrismaTransactionRunner } from '../../../src/modules/inventory/infrastr
 import { BloodComponent } from '../../../src/modules/inventory/domain/entities/blood-component.entity';
 import { ComponentStatus } from '../../../src/modules/inventory/domain/enums/component-status.enum';
 import { ComponentType } from '../../../src/modules/inventory/domain/enums/component-type.enum';
-import { AboGroup, BloodType, RhFactor } from '../../../src/modules/inventory/domain/value-objects/blood-type.vo';
+import { AboGroup, BloodType, RhFactor } from '../../../src/shared/domain/blood-type.vo';
 import { ValidityPeriod } from '../../../src/modules/inventory/domain/value-objects/validity-period.vo';
 import { DonationPurpose } from '../../../src/shared/domain/donation-purpose.enum';
 import { prisma } from '../setup';

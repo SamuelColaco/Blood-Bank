@@ -10,8 +10,12 @@ import { AllocateComponentUseCase } from '../application/use-cases/allocate-comp
 import { DiscardComponentUseCase } from '../application/use-cases/discard-component/discard-component.use-case';
 import { RecordTemperatureReadingUseCase } from '../application/use-cases/record-temperature-reading/record-temperature-reading.use-case';
 import { RegisterEquipmentUseCase } from '../application/use-cases/register-equipment/register-equipment.use-case';
+import { IrradiateComponentUseCase } from '../application/use-cases/irradiate-component/irradiate-component.use-case';
+import { LeukoreduceComponentUseCase } from '../application/use-cases/leukoreduce-component/leukoreduce-component.use-case';
+import { FlagComponentForReevaluationUseCase } from '../application/use-cases/flag-component-for-reevaluation/flag-component-for-reevaluation.use-case';
 import { TemperatureOutOfRangeHandler } from '../application/event-handlers/temperature-out-of-range.handler';
 import { DonationCollectedHandler } from '../application/event-handlers/donation-collected.handler';
+import { AVAILABLE_COMPONENTS_QUERY } from '../../../shared/domain/ports/available-components-query.port';
 import {
   BLOOD_BAG_REPOSITORY,
   BLOOD_COMPONENT_REPOSITORY,
@@ -27,6 +31,7 @@ import { BloodComponentPrismaRepository } from './persistence/blood-component.pr
 import { EquipmentPrismaRepository } from './persistence/equipment.prisma-repository';
 import { OutboxEventPrismaWriter } from './persistence/outbox-event.prisma-writer';
 import { TenantSettingsPrismaRepository } from './persistence/tenant-settings.prisma-repository';
+import { AvailableComponentsQuery } from './queries/available-components.query';
 import { InventoryController } from '../presentation/controllers/inventory.controller';
 
 /**
@@ -34,6 +39,12 @@ import { InventoryController } from '../presentation/controllers/inventory.contr
  * in the module that is allowed to know both the domain interfaces
  * (tokens) and their concrete infrastructure implementations - use cases
  * never import a Prisma repository directly, only its port.
+ *
+ * `exports` exposes the cross-context contracts the Distribuição bounded
+ * context needs (SDD Fase 3, section 2): the reservation/allocation use
+ * cases (which Distribuição invokes but never reimplements), the
+ * read-only availability query, and the shared Prisma transaction
+ * infrastructure so both modules share one database connection.
  */
 @Module({
   controllers: [InventoryController],
@@ -46,6 +57,7 @@ import { InventoryController } from '../presentation/controllers/inventory.contr
     { provide: OUTBOX_EVENT_WRITER, useClass: OutboxEventPrismaWriter },
     { provide: TRANSACTION_RUNNER, useClass: PrismaTransactionRunner },
     { provide: TENANT_SETTINGS_REPOSITORY, useClass: TenantSettingsPrismaRepository },
+    { provide: AVAILABLE_COMPONENTS_QUERY, useClass: AvailableComponentsQuery },
     RegisterBloodBagUseCase,
     SeparateComponentUseCase,
     ReleaseFromQuarantineUseCase,
@@ -57,8 +69,21 @@ import { InventoryController } from '../presentation/controllers/inventory.contr
     DiscardComponentUseCase,
     RecordTemperatureReadingUseCase,
     RegisterEquipmentUseCase,
+    IrradiateComponentUseCase,
+    LeukoreduceComponentUseCase,
+    FlagComponentForReevaluationUseCase,
     TemperatureOutOfRangeHandler,
     DonationCollectedHandler,
+  ],
+  exports: [
+    PrismaService,
+    PrismaTransactionRunner,
+    OutboxEventPrismaWriter,
+    ReserveComponentUseCase,
+    ReleaseReservationUseCase,
+    AllocateComponentUseCase,
+    FlagComponentForReevaluationUseCase,
+    { provide: AVAILABLE_COMPONENTS_QUERY, useClass: AvailableComponentsQuery },
   ],
 })
 export class InventoryModule { }

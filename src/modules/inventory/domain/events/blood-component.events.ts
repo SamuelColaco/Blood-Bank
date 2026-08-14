@@ -65,6 +65,25 @@ export class ReservationReleasedEvent extends DomainEvent {
 
 export class ComponentAllocatedEvent extends DomainEvent {
   readonly eventName = 'ComponentAllocated';
+  constructor(
+    public readonly aggregateId: string,
+    public readonly crossmatchReference: string,
+  ) {
+    super();
+  }
+}
+
+/** Raised when a stored component is physically irradiated before shipment (SDD Fase 3, section 3.2). */
+export class ComponentIrradiatedEvent extends DomainEvent {
+  readonly eventName = 'ComponentIrradiated';
+  constructor(public readonly aggregateId: string) {
+    super();
+  }
+}
+
+/** Raised when a stored component is physically leukoreduced before shipment (SDD Fase 3, section 3.2). */
+export class ComponentLeukoreducedEvent extends DomainEvent {
+  readonly eventName = 'ComponentLeukoreduced';
   constructor(public readonly aggregateId: string) {
     super();
   }
