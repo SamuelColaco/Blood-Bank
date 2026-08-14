@@ -9,7 +9,13 @@ import {
   TRANSPORT_CONTAINER_REPOSITORY,
   OUTBOX_EVENT_WRITER,
   TRANSACTION_RUNNER,
+  HOSPITAL_REQUEST_DETAIL_QUERY,
+  LIST_HOSPITAL_REQUESTS_QUERY,
 } from '../application/tokens';
+import { GetHospitalRequestDetailQuery } from '../application/queries/get-hospital-request-detail/get-hospital-request-detail.query';
+import { GetHospitalRequestDetailPrismaQuery } from '../application/queries/get-hospital-request-detail/get-hospital-request-detail.prisma-query';
+import { ListHospitalRequestsQuery } from '../application/queries/list-hospital-requests/list-hospital-requests.query';
+import { ListHospitalRequestsPrismaQuery } from '../application/queries/list-hospital-requests/list-hospital-requests.prisma-query';
 import { HospitalPrismaRepository } from './persistence/hospital.prisma-repository';
 import { HospitalRequestPrismaRepository } from './persistence/hospital-request.prisma-repository';
 import { TransportContainerPrismaRepository } from './persistence/transport-container.prisma-repository';
@@ -62,6 +68,11 @@ import { DistributionController } from '../presentation/controllers/distribution
     ConfirmDeliveryUseCase,
     CancelHospitalRequestUseCase,
     TransportTemperatureOutOfRangeHandler,
+    // Read queries + their Prisma implementations (SDD §3)
+    GetHospitalRequestDetailQuery,
+    { provide: HOSPITAL_REQUEST_DETAIL_QUERY, useClass: GetHospitalRequestDetailPrismaQuery },
+    ListHospitalRequestsQuery,
+    { provide: LIST_HOSPITAL_REQUESTS_QUERY, useClass: ListHospitalRequestsPrismaQuery },
   ],
 })
 export class DistributionModule { }

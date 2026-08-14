@@ -1,11 +1,20 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
+import {
+  GetHospitalRequestDetailQuery,
+} from '../../application/queries/get-hospital-request-detail/get-hospital-request-detail.query';
+import {
+  ListHospitalRequestsQuery,
+} from '../../application/queries/list-hospital-requests/list-hospital-requests.query';
+import { HospitalRequestStatus } from '../../domain/enums/hospital-request-status.enum';
 import {
   RegisterHospitalUseCase,
 } from '../../application/use-cases/register-hospital/register-hospital.use-case';
@@ -67,6 +76,8 @@ export class DistributionController {
     private readonly recordTransportTemperatureReadingUseCase: RecordTransportTemperatureReadingUseCase,
     private readonly confirmDeliveryUseCase: ConfirmDeliveryUseCase,
     private readonly cancelHospitalRequestUseCase: CancelHospitalRequestUseCase,
+    private readonly getHospitalRequestDetailQuery: GetHospitalRequestDetailQuery,
+    private readonly listHospitalRequestsQuery: ListHospitalRequestsQuery,
   ) { }
 
   @Post('hospitals')
@@ -132,5 +143,27 @@ export class DistributionController {
   cancelHospitalRequest(@Param('id') id: string, @Body() body: unknown) {
     const input = cancelRequestSchema.parse(body);
     return this.cancelHospitalRequestUseCase.execute({ requestId: id, ...input });
+  }
+
+  @Get('requests/:id')
+  getHospitalRequestDetail(@Param('id') id: string, @Query('tenantId') tenantId: string) {
+    return this.getHospitalRequestDetailQuery.execute({ tenantId, requestId: id });
+  }
+
+  @Get('requests')
+  listHospitalRequests(
+    @Query('tenantId') tenantId: string,
+    @Query('hospitalId') hospitalId?: string,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.listHospitalRequestsQuery.execute({
+      tenantId,
+      hospitalId,
+      status: status as HospitalRequestStatus | undefined,
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+    });
   }
 }

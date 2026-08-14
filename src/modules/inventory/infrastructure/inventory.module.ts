@@ -23,6 +23,17 @@ import {
   OUTBOX_EVENT_WRITER,
   TRANSACTION_RUNNER,
   TENANT_SETTINGS_REPOSITORY,
+  TENANT_SETTINGS_WRITER,
+  STOCK_SUMMARY_QUERY,
+  NEAR_EXPIRY_COMPONENTS_QUERY,
+  DISCARD_CAUSES_BREAKDOWN_QUERY,
+  COMPONENT_DETAIL_QUERY,
+  COMPONENT_TIMELINE_QUERY,
+  LIST_EQUIPMENT_QUERY,
+  TEMPERATURE_HISTORY_QUERY,
+  TENANT_SETTINGS_QUERY,
+  HEMOPROD_REPORT_QUERY,
+  DISCARD_ROOT_CAUSE_REPORT_QUERY,
 } from '../application/tokens';
 import { PrismaService } from './persistence/prisma.service';
 import { PrismaTransactionRunner } from './persistence/prisma-transaction-runner';
@@ -33,6 +44,28 @@ import { OutboxEventPrismaWriter } from './persistence/outbox-event.prisma-write
 import { TenantSettingsPrismaRepository } from './persistence/tenant-settings.prisma-repository';
 import { AvailableComponentsQuery } from './queries/available-components.query';
 import { InventoryController } from '../presentation/controllers/inventory.controller';
+import { UpdateTenantSettingsUseCase } from '../application/use-cases/update-tenant-settings/update-tenant-settings.use-case';
+import { TenantSettingsPrismaWriter } from './persistence/tenant-settings.prisma-writer';
+import { GetStockSummaryQuery } from '../application/queries/get-stock-summary/get-stock-summary.query';
+import { GetStockSummaryPrismaQuery } from '../application/queries/get-stock-summary/get-stock-summary.prisma-query';
+import { GetNearExpiryComponentsQuery } from '../application/queries/get-near-expiry-components/get-near-expiry-components.query';
+import { GetNearExpiryComponentsPrismaQuery } from '../application/queries/get-near-expiry-components/get-near-expiry-components.prisma-query';
+import { GetDiscardCausesBreakdownQuery } from '../application/queries/get-discard-causes-breakdown/get-discard-causes-breakdown.query';
+import { GetDiscardCausesBreakdownPrismaQuery } from '../application/queries/get-discard-causes-breakdown/get-discard-causes-breakdown.prisma-query';
+import { GetComponentDetailQuery } from '../application/queries/get-component-detail/get-component-detail.query';
+import { GetComponentDetailPrismaQuery } from '../application/queries/get-component-detail/get-component-detail.prisma-query';
+import { GetComponentTimelineQuery } from '../application/queries/get-component-timeline/get-component-timeline.query';
+import { GetComponentTimelinePrismaQuery } from '../application/queries/get-component-timeline/get-component-timeline.prisma-query';
+import { ListEquipmentQuery } from '../application/queries/list-equipment/list-equipment.query';
+import { ListEquipmentPrismaQuery } from '../application/queries/list-equipment/list-equipment.prisma-query';
+import { GetTemperatureHistoryQuery } from '../application/queries/get-temperature-history/get-temperature-history.query';
+import { GetTemperatureHistoryPrismaQuery } from '../application/queries/get-temperature-history/get-temperature-history.prisma-query';
+import { GetTenantSettingsQuery } from '../application/queries/get-tenant-settings/get-tenant-settings.query';
+import { GetTenantSettingsPrismaQuery } from '../application/queries/get-tenant-settings/get-tenant-settings.prisma-query';
+import { GetHemoprodReportQuery } from '../application/queries/get-hemoprod-report/get-hemoprod-report.query';
+import { GetHemoprodReportPrismaQuery } from '../application/queries/get-hemoprod-report/get-hemoprod-report.prisma-query';
+import { GetDiscardRootCauseReportQuery } from '../application/queries/get-discard-root-cause-report/get-discard-root-cause-report.query';
+import { GetDiscardRootCauseReportPrismaQuery } from '../application/queries/get-discard-root-cause-report/get-discard-root-cause-report.prisma-query';
 
 /**
  * NestJS wiring for the Inventory bounded context. This is the only file
@@ -74,6 +107,30 @@ import { InventoryController } from '../presentation/controllers/inventory.contr
     FlagComponentForReevaluationUseCase,
     TemperatureOutOfRangeHandler,
     DonationCollectedHandler,
+    // Tenant settings write (SDD §2.2)
+    { provide: TENANT_SETTINGS_WRITER, useClass: TenantSettingsPrismaWriter },
+    UpdateTenantSettingsUseCase,
+    // Read queries + their Prisma implementations (SDD §2.1)
+    GetStockSummaryQuery,
+    { provide: STOCK_SUMMARY_QUERY, useClass: GetStockSummaryPrismaQuery },
+    GetNearExpiryComponentsQuery,
+    { provide: NEAR_EXPIRY_COMPONENTS_QUERY, useClass: GetNearExpiryComponentsPrismaQuery },
+    GetDiscardCausesBreakdownQuery,
+    { provide: DISCARD_CAUSES_BREAKDOWN_QUERY, useClass: GetDiscardCausesBreakdownPrismaQuery },
+    GetComponentDetailQuery,
+    { provide: COMPONENT_DETAIL_QUERY, useClass: GetComponentDetailPrismaQuery },
+    GetComponentTimelineQuery,
+    { provide: COMPONENT_TIMELINE_QUERY, useClass: GetComponentTimelinePrismaQuery },
+    ListEquipmentQuery,
+    { provide: LIST_EQUIPMENT_QUERY, useClass: ListEquipmentPrismaQuery },
+    GetTemperatureHistoryQuery,
+    { provide: TEMPERATURE_HISTORY_QUERY, useClass: GetTemperatureHistoryPrismaQuery },
+    GetTenantSettingsQuery,
+    { provide: TENANT_SETTINGS_QUERY, useClass: GetTenantSettingsPrismaQuery },
+    GetHemoprodReportQuery,
+    { provide: HEMOPROD_REPORT_QUERY, useClass: GetHemoprodReportPrismaQuery },
+    GetDiscardRootCauseReportQuery,
+    { provide: DISCARD_ROOT_CAUSE_REPORT_QUERY, useClass: GetDiscardRootCauseReportPrismaQuery },
   ],
   exports: [
     PrismaService,
