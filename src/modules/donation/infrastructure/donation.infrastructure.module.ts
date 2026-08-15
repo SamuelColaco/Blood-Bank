@@ -25,6 +25,10 @@ import { DonationTokens } from '../application/tokens';
         DonationPrismaService,
         DonationPrismaTransactionRunner,
         DonationOutboxEventWriter,
+        DonorPrismaRepository,
+        DonationAppointmentPrismaRepository,
+        ClinicalQuestionnaireVersionPrismaRepository,
+        DonationPrismaRepository,
         // Repositories bound to their DI tokens
         { provide: DonationTokens.DONOR_REPOSITORY, useClass: DonorPrismaRepository },
         { provide: DonationTokens.DONATION_APPOINTMENT_REPOSITORY, useClass: DonationAppointmentPrismaRepository },
@@ -41,6 +45,12 @@ import { DonationTokens } from '../application/tokens';
         DonationAppointmentPrismaRepository,
         ClinicalQuestionnaireVersionPrismaRepository,
         DonationPrismaRepository,
+        DonationTokens.DONOR_REPOSITORY,
+        DonationTokens.DONATION_APPOINTMENT_REPOSITORY,
+        DonationTokens.CLINICAL_QUESTIONNAIRE_VERSION_REPOSITORY,
+        DonationTokens.DONATION_REPOSITORY,
+        DonationTokens.OUTBOX_EVENT_WRITER,
+        DonationTokens.TRANSACTION_RUNNER,
     ],
 })
 export class DonationInfrastructureModule { }

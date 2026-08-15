@@ -84,6 +84,7 @@ import { GetDiscardRootCauseReportPrismaQuery } from '../application/queries/get
   providers: [
     PrismaService,
     PrismaTransactionRunner,
+    OutboxEventPrismaWriter,
     { provide: BLOOD_BAG_REPOSITORY, useClass: BloodBagPrismaRepository },
     { provide: BLOOD_COMPONENT_REPOSITORY, useClass: BloodComponentPrismaRepository },
     { provide: EQUIPMENT_REPOSITORY, useClass: EquipmentPrismaRepository },
@@ -107,10 +108,10 @@ import { GetDiscardRootCauseReportPrismaQuery } from '../application/queries/get
     FlagComponentForReevaluationUseCase,
     TemperatureOutOfRangeHandler,
     DonationCollectedHandler,
-    // Tenant settings write (SDD §2.2)
+    // Tenant settings write
     { provide: TENANT_SETTINGS_WRITER, useClass: TenantSettingsPrismaWriter },
     UpdateTenantSettingsUseCase,
-    // Read queries + their Prisma implementations (SDD §2.1)
+    // Read queries + their Prisma implementations
     GetStockSummaryQuery,
     { provide: STOCK_SUMMARY_QUERY, useClass: GetStockSummaryPrismaQuery },
     GetNearExpiryComponentsQuery,
